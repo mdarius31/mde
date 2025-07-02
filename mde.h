@@ -23,7 +23,7 @@
 
 typedef enum {
  mde_NO_ERRORS,
- mde_INDEX_OUT_OF_BOUND,
+ mde_INDEX_OUT_OF_BOUNDS,
  mde_FAILED_TO_ALLOCATE_MEMORY,
  mde_FAILED_TO_REALLOCATE_MEMORY,
  mde_POTENTIAL_DATA_LOSS
@@ -61,6 +61,15 @@ mde_##NAME* mde_resize##NAME(mde_##NAME* var, int len) {\
  for(int i = 0; i < var->len; i++) resized->data[i] = var->data[i];\
  if(len < var->len) resized->err = mde_POTENTIAL_DATA_LOSS;\
  return resized;\
+}\
+mde_##NAME* mde_get##NAME##AtIndex(mde_##NAME* var, int index) {\
+ mde_##NAME* result = mde_create##NAME(1);\
+ if(index >= var->len || index < 0) {\
+   result->err = mde_INDEX_OUT_OF_BOUNDS;\
+ } else {\
+   result->data[0] = var->data[index];\
+ }\
+ return result;\
 }
 
 #ifdef mde_RECOMMENDED
