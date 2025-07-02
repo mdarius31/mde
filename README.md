@@ -12,7 +12,7 @@ Lets say you want functions for the bool data type:
  mde_CREATE(bool, Bool)
 ```
  
-**bool** is the type that its inside and **Bool** will be the string used to compose the function names
+**bool** is the type that its inside and **BoolArr** will be the string used to compose the function names
  and you will get the following functions:
  
 ```
