@@ -3,12 +3,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+// define mde_RECOMMENDED if u want structs and functions for all the basic C data types
 #define mde_RECOMMENDED
 #include "mde.h"
 
 
 // created by the preprocessor
-mde_CREATE(mde_Char*, ArrOfStrings)
+mde_CREATE(mde_CharArr*, ArrOfStrings)
 mde_CREATE(mde_ArrOfStrings*, ArrOfArrOfStrings)
 
 
@@ -24,10 +25,10 @@ mde_CREATE(struct test, testArr);
 int main(void) {
 
 // Strings! 
-mde_Char* ch = mde_createChar(10);
+mde_CharArr* ch = mde_createCharArr(10);
  
-if(!mde_isCharSafe(ch)) {
- mde_deleteChar(ch);
+if(!mde_isCharArrSafe(ch)) {
+ mde_deleteCharArr(ch);
  return 1;
 }
 printf("yeay it works!\n");
@@ -36,20 +37,20 @@ printf("yeay it works!\n");
 ch->data[3] = '6';
 ch->data[4] = '9';
 
-mde_Char* tmpCh = mde_resizeChar(ch, 20);
+mde_CharArr* tmpCh = mde_resizeCharArr(ch, 20);
 
-if(!mde_isCharSafe(tmpCh)){
- mde_deleteChar(ch);
- mde_deleteChar(tmpCh);
+if(!mde_isCharArrSafe(tmpCh)){
+ mde_deleteCharArr(ch);
+ mde_deleteCharArr(tmpCh);
  return 1;
 }
 
-mde_deleteChar(ch);
+mde_deleteCharArr(ch);
 ch = tmpCh;
 
 printf("%c%c nice\n",ch->data[3],ch->data[4]);
 
-mde_deleteChar(ch);
+mde_deleteCharArr(ch);
 
 
 
@@ -61,8 +62,8 @@ if(!mde_isArrOfStringsSafe(arr)) {
 }
 
 for(int i = 0; i < arr->len; i++) {
- arr->data[i] = mde_createChar(100);
- mde_deleteChar(arr->data[i]);
+ arr->data[i] = mde_createCharArr(100);
+ mde_deleteCharArr(arr->data[i]);
 }
 
 mde_deleteArrOfStrings(arr);
@@ -75,8 +76,8 @@ for(int i = 0; i < arrOfArr->len; i++) {
  arrOfArr->data[i] = mde_createArrOfStrings(10);
  
  for(int j = 0; j < arrOfArr->data[i]->len; j++) {
-   arrOfArr->data[i]->data[j] = mde_createChar(100);
-   mde_deleteChar(arrOfArr->data[i]->data[j]);
+   arrOfArr->data[i]->data[j] = mde_createCharArr(100);
+   mde_deleteCharArr(arrOfArr->data[i]->data[j]);
  }
 
  mde_deleteArrOfStrings(arrOfArr->data[i]);   

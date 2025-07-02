@@ -65,47 +65,47 @@ mde_##NAME* mde_resize##NAME(mde_##NAME* var, int len) {\
 
 #ifdef mde_RECOMMENDED
 
- mde_CREATE(bool, Bool)
+ mde_CREATE(bool, BoolArr)
  
- mde_CREATE(char, Char)
- mde_CREATE(signed char, SChar)
- mde_CREATE(unsigned char, UChar)
+ mde_CREATE(char, CharArr)
+ mde_CREATE(signed char, SCharArr)
+ mde_CREATE(unsigned char, UCharArr)
  
- mde_CREATE(short, Short)
- mde_CREATE(short int , ShortInt)
- mde_CREATE(signed short, SShort)
- mde_CREATE(signed short int, SShortInt)
+ mde_CREATE(short, ShortArr)
+ mde_CREATE(short int , ShortIntArr)
+ mde_CREATE(signed short, SShortArr)
+ mde_CREATE(signed short int, SShortIntArr)
 
- mde_CREATE(unsigned short, UShort)
- mde_CREATE(unsigned short int, UShortInt)
+ mde_CREATE(unsigned short, UShortArr)
+ mde_CREATE(unsigned short int, UShortIntArr)
  
- mde_CREATE(int, Int)
- mde_CREATE(signed, Signed)
- mde_CREATE(signed int, SInt)
+ mde_CREATE(int, IntArr)
+ mde_CREATE(signed, SignedArr)
+ mde_CREATE(signed int, SIntArr)
  
- mde_CREATE(unsigned, Unsigned) 
- mde_CREATE(unsigned int, UInt)
+ mde_CREATE(unsigned, UnsignedArr) 
+ mde_CREATE(unsigned int, UIntArr)
 
- mde_CREATE(long, Long)
- mde_CREATE(long int, LongInt)
- mde_CREATE(signed long, SLong)
- mde_CREATE(signed long int, SLongInt)
+ mde_CREATE(long, LongArr)
+ mde_CREATE(long int, LongIntArr)
+ mde_CREATE(signed long, SLongArr)
+ mde_CREATE(signed long int, SLongIntArr)
 
- mde_CREATE(unsigned long, ULong)
- mde_CREATE(unsigned long int, ULongInt)
+ mde_CREATE(unsigned long, ULongArr)
+ mde_CREATE(unsigned long int, ULongIntArr)
 
- mde_CREATE(long long, LongLong)
- mde_CREATE(long long, LongLongInt)
- mde_CREATE(signed long long, SLongLong)
- mde_CREATE(signed long long int, SLongLongInt)
+ mde_CREATE(long long, LongLongArr)
+ mde_CREATE(long long, LongLongIntArr)
+ mde_CREATE(signed long long, SLongLongArr)
+ mde_CREATE(signed long long int, SLongLongIntArr)
 
- mde_CREATE(unsigned long long, uLongLong)
- mde_CREATE(unsigned long long int, uLongLongInt)
+ mde_CREATE(unsigned long long, uLongLongArr)
+ mde_CREATE(unsigned long long int, uLongLongIntArr)
 
- mde_CREATE(float, Float)
+ mde_CREATE(float, FloatArr)
  
- mde_CREATE(double, Double)
+ mde_CREATE(double, DoubleArr)
  
- mde_CREATE(long double, LongDouble)
+ mde_CREATE(long double, LongDoubleArr)
   
 #endif
