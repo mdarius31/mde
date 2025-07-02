@@ -50,7 +50,17 @@ ch = tmpCh;
 
 printf("%c%c nice\n",ch->data[3],ch->data[4]);
 
+mde_CharArr* c = mde_getCharArrAtIndex(ch, 3);
+
+
+if(mde_isCharArrSafe(c)) {
+ printf("we got index 3 with value: %c\n", c->data[0]);
+ 
+}
+
+
 mde_deleteCharArr(ch);
+mde_deleteCharArr(c);
 
 
 
