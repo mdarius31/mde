@@ -37,7 +37,7 @@ typedef struct {\
 \
 int mde_##NAME##Size = sizeof(mde_##NAME);\
 \
-mde_##NAME* mde_create##NAME() {\
+mde_##NAME* mde_new##NAME() {\
  mde_##NAME* result = malloc(mde_##NAME##Size);\
  result->err = mde_NO_ERRORS;\
  if(result == mde_NULL) result->err = mde_FAILED_TO_ALLOCATE_MEMORY;\
@@ -67,7 +67,7 @@ typedef struct {\
 \
 int mde_##NAME##ArrSize = sizeof(mde_##NAME##Arr);\
 \
-mde_##NAME##Arr* mde_create##NAME##Arr(int len) {\
+mde_##NAME##Arr* mde_new##NAME##Arr(int len) {\
  mde_##NAME##Arr* result = mde_malloc(mde_##NAME##ArrSize);\
  result->err = mde_NO_ERRORS;\
  result->len = len;\
@@ -95,7 +95,7 @@ mde_##NAME##Arr* mde_delete##NAME##Arr(mde_##NAME##Arr* arr) {\
 }\
 \
 mde_##NAME##Arr* mde_resize##NAME##Arr(mde_##NAME##Arr* arr, int len) {\
- mde_##NAME##Arr* resized = mde_create##NAME##Arr(len);\
+ mde_##NAME##Arr* resized = mde_new##NAME##Arr(len);\
  if(!mde_is##NAME##ArrSafe(resized)) return resized;\
  for(int i = 0; i < arr->len; i++) resized->val[i] = arr->val[i];\
  if(len < arr->len) resized->err = mde_POTENTIAL_DATA_LOSS;\
@@ -108,7 +108,7 @@ mde_bool mde_isIndexValid##NAME(mde_##NAME##Arr* arr, int index) {\
 }\
 \
 mde_##NAME* mde_get##NAME##ArrAtIndex(mde_##NAME##Arr* arr, int index) {\
- mde_##NAME* result = mde_create##NAME();\
+ mde_##NAME* result = mde_new##NAME();\
  if(!mde_isIndexValid##NAME(arr, index)) {\
    result->err = mde_INDEX_OUT_OF_BOUNDS;\
  } else {\
@@ -124,6 +124,12 @@ mde_##NAME##Arr* mde_set##NAME##AtIndex(mde_##NAME##Arr* arr, TYPE val, int inde
   arr->val[index] = val;\
  }\
  return arr;\
+}\
+\
+mde_##NAME##Arr* mde_new##NAME##ArrFrom(TYPE* val, int len) {\
+ mde_##NAME##Arr* result = mde_new##NAME##Arr(len);\
+ for(int i = 0; i < len; i++) mde_set##NAME##AtIndex(result, val[i], i);\
+ return result;\
 }
 
 

@@ -9,7 +9,7 @@
 
 int main(void) {
 
- mde_Char* b = mde_createChar();
+ mde_Char* b = mde_newChar();
 
  if(mde_isCharSafe(b)) {
   b->val = 'A';
@@ -19,7 +19,7 @@ int main(void) {
  b = mde_deleteChar(b);
 
  // Strings! 
- mde_CharArr* ch = mde_createCharArr(10);
+ mde_CharArr* ch = mde_newCharArr(10);
  
  if(mde_isCharArrSafe(ch))
   for(int i = 0; i < ch->len; i++) {
@@ -31,7 +31,7 @@ int main(void) {
  printf("\n");
  
  ch = mde_deleteCharArr(ch);
- ch = mde_createCharArr(20);
+ ch = mde_newCharArr(20);
   
  
  ch = mde_setCharAtIndex(ch, '6', 3);
@@ -61,6 +61,13 @@ int main(void) {
  ch = mde_deleteCharArr(ch);
  c = mde_deleteChar(c);
 
+ 
+ ch = mde_newCharArrFrom("nice 69", 7);
+ for(int i = 0; i < ch->len; i++) printf("%c", ch->val[i]);
+ 
+ 
+ printf("\n");
+ ch = mde_deleteCharArr(ch);
 
  return 0;
 }
