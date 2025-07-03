@@ -79,38 +79,54 @@ mde_##NAME##Arr* mde_create##NAME##Arr(int len) {\
  return result;\
 }\
 \
-mde_bool mde_is##NAME##ArrSafe(mde_##NAME##Arr* val) {\
- if(val == mde_NULL) return mde_false;\
- if(val->err == mde_NO_ERRORS) return mde_true;\
+mde_bool mde_is##NAME##ArrSafe(mde_##NAME##Arr* arr) {\
+ if(arr == mde_NULL) return mde_false;\
+ if(arr->err == mde_NO_ERRORS) return mde_true;\
  return mde_false;\
 }\
 \
-mde_##NAME##Arr* mde_delete##NAME##Arr(mde_##NAME##Arr* val) {\
- mde_free(val->val);\
- val->val = mde_NULL;\
- val->len = 0;\
- mde_free(val);\
- val = mde_NULL;\
- return val;\
+mde_##NAME##Arr* mde_delete##NAME##Arr(mde_##NAME##Arr* arr) {\
+ mde_free(arr->val);\
+ arr->val = mde_NULL;\
+ arr->len = 0;\
+ mde_free(arr);\
+ arr = mde_NULL;\
+ return arr;\
 }\
 \
-mde_##NAME##Arr* mde_resize##NAME##Arr(mde_##NAME##Arr* val, int len) {\
+mde_##NAME##Arr* mde_resize##NAME##Arr(mde_##NAME##Arr* arr, int len) {\
  mde_##NAME##Arr* resized = mde_create##NAME##Arr(len);\
  if(!mde_is##NAME##ArrSafe(resized)) return resized;\
- for(int i = 0; i < val->len; i++) resized->val[i] = val->val[i];\
- if(len < val->len) resized->err = mde_POTENTIAL_DATA_LOSS;\
+ for(int i = 0; i < arr->len; i++) resized->val[i] = arr->val[i];\
+ if(len < arr->len) resized->err = mde_POTENTIAL_DATA_LOSS;\
  return resized;\
 }\
 \
-mde_##NAME* mde_get##NAME##ArrAtIndex(mde_##NAME##Arr* val, int index) {\
+mde_bool mde_isIndexValid##NAME(mde_##NAME##Arr* arr, int index) {\
+ if(index >= arr->len || index < 0) return mde_false;\
+ else return mde_true;\
+}\
+\
+mde_##NAME* mde_get##NAME##ArrAtIndex(mde_##NAME##Arr* arr, int index) {\
  mde_##NAME* result = mde_create##NAME();\
- if(index >= val->len || index < 0) {\
+ if(!mde_isIndexValid##NAME(arr, index)) {\
    result->err = mde_INDEX_OUT_OF_BOUNDS;\
  } else {\
-   result->val = val->val[index];\
+   result->val = arr->val[index];\
  }\
  return result;\
+}\
+\
+mde_##NAME##Arr* mde_set##NAME##AtIndex(mde_##NAME##Arr* arr, TYPE val, int index) {\
+ if(!mde_isIndexValid##NAME(arr, index)) {\
+  arr->err = mde_INDEX_OUT_OF_BOUNDS;\
+ } else {\
+  arr->val[index] = val;\
+ }\
+ return arr;\
 }
+
+
 
 #ifdef mde_RECOMMENDED
 

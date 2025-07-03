@@ -29,13 +29,13 @@ int main(void) {
   }
   
  printf("\n");
+ 
  ch = mde_deleteCharArr(ch);
-     
  ch = mde_createCharArr(20);
   
  
- ch->val[3] = '6';
- ch->val[4] = '9';
+ ch = mde_setCharAtIndex(ch, '6', 3);
+ ch = mde_setCharAtIndex(ch, '9', 4);
  
  mde_CharArr* tmpCh = mde_resizeCharArr(ch, 20);
  
