@@ -29,7 +29,7 @@ typedef enum {
  mde_POTENTIAL_DATA_LOSS
 } mde_Error;
 
-#define mde_CREATE(TYPE, NAME)\
+#define mde_gen(TYPE, NAME)\
 typedef struct {\
  mde_Error err;\
  TYPE val;\
@@ -44,7 +44,7 @@ mde_##NAME* mde_new##NAME() {\
  return result;\
 }\
 \
-mde_##NAME* mde_delete##NAME(mde_##NAME* val) {\
+mde_##NAME* mde_rm##NAME(mde_##NAME* val) {\
  mde_free(val);\
  val = mde_NULL;\
  return val;\
@@ -56,9 +56,6 @@ mde_bool mde_is##NAME##Safe(mde_##NAME* val) {\
  return mde_false;\
 }\
 \
-\
-\
-/* ARRAY STUFF */ \
 typedef struct {\
  mde_Error err;\
  TYPE* val;\
@@ -85,7 +82,7 @@ mde_bool mde_is##NAME##ArrSafe(mde_##NAME##Arr* arr) {\
  return mde_false;\
 }\
 \
-mde_##NAME##Arr* mde_delete##NAME##Arr(mde_##NAME##Arr* arr) {\
+mde_##NAME##Arr* mde_rm##NAME##Arr(mde_##NAME##Arr* arr) {\
  mde_free(arr->val);\
  arr->val = mde_NULL;\
  arr->len = 0;\
@@ -107,7 +104,7 @@ mde_bool mde_isIndexValid##NAME(mde_##NAME##Arr* arr, int index) {\
  else return mde_true;\
 }\
 \
-mde_##NAME* mde_get##NAME##ArrAtIndex(mde_##NAME##Arr* arr, int index) {\
+mde_##NAME* mde_get##NAME##At(mde_##NAME##Arr* arr, int index) {\
  mde_##NAME* result = mde_new##NAME();\
  if(!mde_isIndexValid##NAME(arr, index)) {\
    result->err = mde_INDEX_OUT_OF_BOUNDS;\
@@ -117,7 +114,7 @@ mde_##NAME* mde_get##NAME##ArrAtIndex(mde_##NAME##Arr* arr, int index) {\
  return result;\
 }\
 \
-mde_##NAME##Arr* mde_set##NAME##AtIndex(mde_##NAME##Arr* arr, TYPE val, int index) {\
+mde_##NAME##Arr* mde_set##NAME##At(mde_##NAME##Arr* arr, TYPE val, int index) {\
  if(!mde_isIndexValid##NAME(arr, index)) {\
   arr->err = mde_INDEX_OUT_OF_BOUNDS;\
  } else {\
@@ -128,55 +125,70 @@ mde_##NAME##Arr* mde_set##NAME##AtIndex(mde_##NAME##Arr* arr, TYPE val, int inde
 \
 mde_##NAME##Arr* mde_new##NAME##ArrFrom(TYPE* val, int len) {\
  mde_##NAME##Arr* result = mde_new##NAME##Arr(len);\
- for(int i = 0; i < len; i++) mde_set##NAME##AtIndex(result, val[i], i);\
+ for(int i = 0; i < len; i++) mde_set##NAME##At(result, val[i], i);\
+ return result;\
+}\
+\
+mde_##NAME##Arr* mde_##NAME##ArrAdd(mde_##NAME##Arr* arr, TYPE val) {\
+ int i = arr->len;\
+ mde_##NAME##Arr* result = mde_resize##NAME##Arr(arr, arr->len + 1);\
+ result = mde_set##NAME##At(result, val, i);\
+ mde_rm##NAME##Arr(arr);\
+ return result;\
+}\
+\
+mde_##NAME##Arr* mde_combine##NAME##Arr(mde_##NAME##Arr* arr1, mde_##NAME##Arr* arr2) {\
+ int len = arr1->len + arr2->len;\
+ mde_##NAME##Arr* result = mde_new##NAME##Arr(len);\
+ for(int i = 0; i < arr1->len; i++) mde_set##NAME##At(result, arr1->val[i], i);\
+ for(int i = 0; i < arr2->len; i++) mde_set##NAME##At(result, arr2->val[i], arr1->len + i);\
  return result;\
 }
 
 
-
 #ifdef mde_RECOMMENDED
 
- mde_CREATE(bool, Bool)
+ mde_gen(bool, Bool)
  
- mde_CREATE(char, Char)
- mde_CREATE(signed char, SChar)
- mde_CREATE(unsigned char, UChar)
+ mde_gen(char, Char)
+ mde_gen(signed char, SChar)
+ mde_gen(unsigned char, UChar)
  
- mde_CREATE(short, Short)
- mde_CREATE(short int , ShortInt)
- mde_CREATE(signed short, SShort)
- mde_CREATE(signed short int, SShortInt)
+ mde_gen(short, Short)
+ mde_gen(short int , ShortInt)
+ mde_gen(signed short, SShort)
+ mde_gen(signed short int, SShortInt)
 
- mde_CREATE(unsigned short, UShort)
- mde_CREATE(unsigned short int, UShortInt)
+ mde_gen(unsigned short, UShort)
+ mde_gen(unsigned short int, UShortInt)
  
- mde_CREATE(int, Int)
- mde_CREATE(signed, Signed)
- mde_CREATE(signed int, SInt)
+ mde_gen(int, Int)
+ mde_gen(signed, Signed)
+ mde_gen(signed int, SInt)
  
- mde_CREATE(unsigned, Unsigned) 
- mde_CREATE(unsigned int, UInt)
+ mde_gen(unsigned, Unsigned) 
+ mde_gen(unsigned int, UInt)
 
- mde_CREATE(long, Long)
- mde_CREATE(long int, LongInt)
- mde_CREATE(signed long, SLong)
- mde_CREATE(signed long int, SLongInt)
+ mde_gen(long, Long)
+ mde_gen(long int, LongInt)
+ mde_gen(signed long, SLong)
+ mde_gen(signed long int, SLongInt)
 
- mde_CREATE(unsigned long, ULong)
- mde_CREATE(unsigned long int, ULongInt)
+ mde_gen(unsigned long, ULong)
+ mde_gen(unsigned long int, ULongInt)
 
- mde_CREATE(long long, LongLong)
- mde_CREATE(long long, LongLongInt)
- mde_CREATE(signed long long, SLongLong)
- mde_CREATE(signed long long int, SLongLongInt)
+ mde_gen(long long, LongLong)
+ mde_gen(long long, LongLongInt)
+ mde_gen(signed long long, SLongLong)
+ mde_gen(signed long long int, SLongLongInt)
 
- mde_CREATE(unsigned long long, uLongLong)
- mde_CREATE(unsigned long long int, uLongLongInt)
+ mde_gen(unsigned long long, uLongLong)
+ mde_gen(unsigned long long int, uLongLongInt)
 
- mde_CREATE(float, Float)
+ mde_gen(float, Float)
  
- mde_CREATE(double, Double)
+ mde_gen(double, Double)
  
- mde_CREATE(long double, LongDouble)
+ mde_gen(long double, LongDouble)
   
 #endif

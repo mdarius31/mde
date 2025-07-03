@@ -9,7 +9,7 @@ Lets say you want functions for the bool data type:
  
 ```
  #include "mde.h"
- mde_CREATE(bool, Bool)
+ mde_gen(bool, Bool)
 ```
  
 **bool** is the type that its inside and **Bool** will be the string used to compose the function names
@@ -18,30 +18,32 @@ Lets say you want functions for the bool data type:
  
 **This works with any data type** 
 ```
-typedef struct {
-  mde_Error err;
-  _Bool val;
-} mde_Bool;
-
-int mde_BoolSize = sizeof(mde_Bool);
-
-mde_Bool *mde_createBool();
-mde_Bool *mde_deleteBool(mde_Bool *val);
-_Bool mde_isBoolSafe(mde_Bool *val);
-
-typedef struct {
-  mde_Error err;
-  _Bool *val;
-  int len;
-} mde_BoolArr;
-
-int mde_BoolArrSize = sizeof(mde_BoolArr);
-
-mde_BoolArr *mde_createBoolArr(int len);
-_Bool mde_isBoolArrSafe(mde_BoolArr *val);
-mde_BoolArr *mde_deleteBoolArr(mde_BoolArr *val);
-mde_BoolArr *mde_resizeBoolArr(mde_BoolArr *val, int len);
-mde_Bool *mde_getBoolArrAtIndex(mde_BoolArr *val, int index);
+ typedef struct {
+   mde_Error err;
+   _Bool val;
+ } mde_Bool;
+ int mde_BoolSize = sizeof(mde_Bool);
+ mde_Bool *mde_newBool()
+ mde_Bool *mde_rmBool(mde_Bool *val)
+ _Bool mde_isBoolSafe(mde_Bool *val)
+ 
+ typedef struct {
+   mde_Error err;
+   _Bool *val;
+   int len;
+ } mde_BoolArr;
+ 
+ int mde_BoolArrSize = sizeof(mde_BoolArr);
+ mde_BoolArr *mde_newBoolArr(int len)
+ _Bool mde_isBoolArrSafe(mde_BoolArr *arr)
+ mde_BoolArr *mde_rmBoolArr(mde_BoolArr *arr)
+ mde_BoolArr *mde_resizeBoolArr(mde_BoolArr *arr, int len)
+ _Bool mde_isIndexValidBool(mde_BoolArr *arr, int index)
+ mde_Bool *mde_getBoolAt(mde_BoolArr *arr, int index)
+ mde_BoolArr *mde_setBoolAt(mde_BoolArr *arr, _Bool val, int index)
+ mde_BoolArr *mde_newBoolArrFrom(_Bool *val, int len)
+ mde_BoolArr *mde_BoolArrAdd(mde_BoolArr *arr, _Bool val)
+ mde_BoolArr *mde_combineBoolArr(mde_BoolArr *arr1, mde_BoolArr *arr2)
 ```
 
 Define **mde_RECOMMENDED** if u want structs and functions for all the basic C data types

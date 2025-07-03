@@ -16,7 +16,7 @@ int main(void) {
   printf("test: %c\n", b->val);
  }
 
- b = mde_deleteChar(b);
+ b = mde_rmChar(b);
 
  // Strings! 
  mde_CharArr* ch = mde_newCharArr(10);
@@ -30,27 +30,27 @@ int main(void) {
   
  printf("\n");
  
- ch = mde_deleteCharArr(ch);
+ ch = mde_rmCharArr(ch);
  ch = mde_newCharArr(20);
   
  
- ch = mde_setCharAtIndex(ch, '6', 3);
- ch = mde_setCharAtIndex(ch, '9', 4);
+ ch = mde_setCharAt(ch, '6', 3);
+ ch = mde_setCharAt(ch, '9', 4);
  
  mde_CharArr* tmpCh = mde_resizeCharArr(ch, 20);
  
  if(!mde_isCharArrSafe(tmpCh)){
-  ch = mde_deleteCharArr(ch);
-  tmpCh = mde_deleteCharArr(tmpCh);
+  ch = mde_rmCharArr(ch);
+  tmpCh = mde_rmCharArr(tmpCh);
   return 1;
  }
  
- ch = mde_deleteCharArr(ch);
+ ch = mde_rmCharArr(ch);
  ch = tmpCh;
  
  printf("%c%c nice\n",ch->val[3],ch->val[4]);
  
- mde_Char* c = mde_getCharArrAtIndex(ch, 3);
+ mde_Char* c = mde_getCharAt(ch, 3);
 
 
  if(mde_isCharSafe(c)) {
@@ -58,16 +58,25 @@ int main(void) {
  }
 
 
- ch = mde_deleteCharArr(ch);
- c = mde_deleteChar(c);
+ ch = mde_rmCharArr(ch);
+ c = mde_rmChar(c);
 
  
  ch = mde_newCharArrFrom("nice 69", 7);
  for(int i = 0; i < ch->len; i++) printf("%c", ch->val[i]);
- 
- 
- printf("\n");
- ch = mde_deleteCharArr(ch);
 
+ ch = mde_CharArrAdd(ch, '\n');
+ for(int i = 0; i < ch->len; i++) printf("%c", ch->val[i]);
+ 
+ char* str = " ohh very nice\n";
+
+ mde_CharArr* ch2 = mde_newCharArrFrom(str, strlen(str));
+ mde_CharArr* t = mde_combineCharArr(ch, ch2);
+
+ for(int i = 0; i < t->len; i++) printf("%c", t->val[i]);
+ t = mde_rmCharArr(t);
+ 
+ ch2 = mde_rmCharArr(ch2);
+ ch = mde_rmCharArr(ch);
  return 0;
 }
