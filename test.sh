@@ -1,4 +1,4 @@
-cc --std=c99 -Wextra -Wall -Werror -g test.c -o test.x86_64
+cc --std=c99 -Wextra -Wall -Werror -g -Wunused test.c -o test.x86_64
 cc -P -E --std=c99 -Wextra -Wall -Werror test.c > temp.c.tmp
 
 clang-format -i temp.c.tmp

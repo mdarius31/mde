@@ -4,7 +4,7 @@
 #define mde_memcpy(ptr1, ptr2, size) memcpy(ptr1, ptr2, size)
 #define mde_realloc(ptr, size) realloc(ptr, size)
 #define mde_malloc(size) malloc(size)
-#define mde_free(var) free(var)
+#define mde_free(val) free(val)
 #define mde_NULL NULL
 
 #define mde_LOG_LEVEL NONE
@@ -32,89 +32,129 @@ typedef enum {
 #define mde_CREATE(TYPE, NAME)\
 typedef struct {\
  mde_Error err;\
- TYPE* data;\
- int len;\
+ TYPE val;\
 } mde_##NAME;\
-mde_##NAME* mde_create##NAME(int len) {\
- mde_##NAME* result = mde_malloc(sizeof(mde_##NAME));\
+\
+int mde_##NAME##Size = sizeof(mde_##NAME);\
+\
+mde_##NAME* mde_create##NAME() {\
+ mde_##NAME* result = malloc(mde_##NAME##Size);\
+ result->err = mde_NO_ERRORS;\
+ if(result == mde_NULL) result->err = mde_FAILED_TO_ALLOCATE_MEMORY;\
+ return result;\
+}\
+\
+mde_##NAME* mde_delete##NAME(mde_##NAME* val) {\
+ mde_free(val);\
+ val = mde_NULL;\
+ return val;\
+}\
+\
+mde_bool mde_is##NAME##Safe(mde_##NAME* val) {\
+ if(val == mde_NULL) return mde_false;\
+ if(val->err == mde_NO_ERRORS) return mde_true;\
+ return mde_false;\
+}\
+\
+\
+\
+/* ARRAY STUFF */ \
+typedef struct {\
+ mde_Error err;\
+ TYPE* val;\
+ int len;\
+} mde_##NAME##Arr;\
+\
+int mde_##NAME##ArrSize = sizeof(mde_##NAME##Arr);\
+\
+mde_##NAME##Arr* mde_create##NAME##Arr(int len) {\
+ mde_##NAME##Arr* result = mde_malloc(mde_##NAME##ArrSize);\
  result->err = mde_NO_ERRORS;\
  result->len = len;\
- result->data = mde_malloc(sizeof(TYPE) * len);\
+ result->val = mde_malloc(sizeof(TYPE) * len);\
  \
- if(result->data == mde_NULL) {\
+ if(result->val == mde_NULL) {\
   result->err = mde_FAILED_TO_ALLOCATE_MEMORY;\
  }\
  return result;\
 }\
-mde_bool mde_is##NAME##Safe(mde_##NAME* var) {\
- if(var->err == mde_NO_ERRORS) return mde_true;\
+\
+mde_bool mde_is##NAME##ArrSafe(mde_##NAME##Arr* val) {\
+ if(val == mde_NULL) return mde_false;\
+ if(val->err == mde_NO_ERRORS) return mde_true;\
  return mde_false;\
 }\
-void mde_delete##NAME(mde_##NAME* var) {\
- mde_free(var->data);\
- var->len = 0;\
- mde_free(var);\
+\
+mde_##NAME##Arr* mde_delete##NAME##Arr(mde_##NAME##Arr* val) {\
+ mde_free(val->val);\
+ val->val = mde_NULL;\
+ val->len = 0;\
+ mde_free(val);\
+ val = mde_NULL;\
+ return val;\
 }\
-mde_##NAME* mde_resize##NAME(mde_##NAME* var, int len) {\
- mde_##NAME* resized = mde_create##NAME(len);\
- if(!mde_is##NAME##Safe(resized)) return resized;\
- for(int i = 0; i < var->len; i++) resized->data[i] = var->data[i];\
- if(len < var->len) resized->err = mde_POTENTIAL_DATA_LOSS;\
+\
+mde_##NAME##Arr* mde_resize##NAME##Arr(mde_##NAME##Arr* val, int len) {\
+ mde_##NAME##Arr* resized = mde_create##NAME##Arr(len);\
+ if(!mde_is##NAME##ArrSafe(resized)) return resized;\
+ for(int i = 0; i < val->len; i++) resized->val[i] = val->val[i];\
+ if(len < val->len) resized->err = mde_POTENTIAL_DATA_LOSS;\
  return resized;\
 }\
-mde_##NAME* mde_get##NAME##AtIndex(mde_##NAME* var, int index) {\
- mde_##NAME* result = mde_create##NAME(1);\
- if(index >= var->len || index < 0) {\
+\
+mde_##NAME* mde_get##NAME##ArrAtIndex(mde_##NAME##Arr* val, int index) {\
+ mde_##NAME* result = mde_create##NAME();\
+ if(index >= val->len || index < 0) {\
    result->err = mde_INDEX_OUT_OF_BOUNDS;\
  } else {\
-   result->data[0] = var->data[index];\
+   result->val = val->val[index];\
  }\
  return result;\
 }
 
 #ifdef mde_RECOMMENDED
 
- mde_CREATE(bool, BoolArr)
+ mde_CREATE(bool, Bool)
  
- mde_CREATE(char, CharArr)
- mde_CREATE(signed char, SCharArr)
- mde_CREATE(unsigned char, UCharArr)
+ mde_CREATE(char, Char)
+ mde_CREATE(signed char, SChar)
+ mde_CREATE(unsigned char, UChar)
  
- mde_CREATE(short, ShortArr)
- mde_CREATE(short int , ShortIntArr)
- mde_CREATE(signed short, SShortArr)
- mde_CREATE(signed short int, SShortIntArr)
+ mde_CREATE(short, Short)
+ mde_CREATE(short int , ShortInt)
+ mde_CREATE(signed short, SShort)
+ mde_CREATE(signed short int, SShortInt)
 
- mde_CREATE(unsigned short, UShortArr)
- mde_CREATE(unsigned short int, UShortIntArr)
+ mde_CREATE(unsigned short, UShort)
+ mde_CREATE(unsigned short int, UShortInt)
  
- mde_CREATE(int, IntArr)
- mde_CREATE(signed, SignedArr)
- mde_CREATE(signed int, SIntArr)
+ mde_CREATE(int, Int)
+ mde_CREATE(signed, Signed)
+ mde_CREATE(signed int, SInt)
  
- mde_CREATE(unsigned, UnsignedArr) 
- mde_CREATE(unsigned int, UIntArr)
+ mde_CREATE(unsigned, Unsigned) 
+ mde_CREATE(unsigned int, UInt)
 
- mde_CREATE(long, LongArr)
- mde_CREATE(long int, LongIntArr)
- mde_CREATE(signed long, SLongArr)
- mde_CREATE(signed long int, SLongIntArr)
+ mde_CREATE(long, Long)
+ mde_CREATE(long int, LongInt)
+ mde_CREATE(signed long, SLong)
+ mde_CREATE(signed long int, SLongInt)
 
- mde_CREATE(unsigned long, ULongArr)
- mde_CREATE(unsigned long int, ULongIntArr)
+ mde_CREATE(unsigned long, ULong)
+ mde_CREATE(unsigned long int, ULongInt)
 
- mde_CREATE(long long, LongLongArr)
- mde_CREATE(long long, LongLongIntArr)
- mde_CREATE(signed long long, SLongLongArr)
- mde_CREATE(signed long long int, SLongLongIntArr)
+ mde_CREATE(long long, LongLong)
+ mde_CREATE(long long, LongLongInt)
+ mde_CREATE(signed long long, SLongLong)
+ mde_CREATE(signed long long int, SLongLongInt)
 
- mde_CREATE(unsigned long long, uLongLongArr)
- mde_CREATE(unsigned long long int, uLongLongIntArr)
+ mde_CREATE(unsigned long long, uLongLong)
+ mde_CREATE(unsigned long long int, uLongLongInt)
 
- mde_CREATE(float, FloatArr)
+ mde_CREATE(float, Float)
  
- mde_CREATE(double, DoubleArr)
+ mde_CREATE(double, Double)
  
- mde_CREATE(long double, LongDoubleArr)
+ mde_CREATE(long double, LongDouble)
   
 #endif

@@ -3,97 +3,63 @@
 #include <stdlib.h>
 #include <string.h>
 
-// define mde_RECOMMENDED if u want structs and functions for all the basic C data types
+// define mde_RECOMMENDED if u want structs and functions for all the basic C val types
 #define mde_RECOMMENDED
 #include "mde.h"
 
-
-// created by the preprocessor
-mde_CREATE(mde_CharArr*, ArrOfStrings)
-mde_CREATE(mde_ArrOfStrings*, ArrOfArrOfStrings)
-
-
-mde_CREATE(char, String)
-mde_CREATE(char*, ArrOfStrings2)
-
-struct test {
- int a;
-};
-
-mde_CREATE(struct test, testArr);
-
 int main(void) {
 
-// Strings! 
-mde_CharArr* ch = mde_createCharArr(10);
- 
-if(!mde_isCharArrSafe(ch)) {
- mde_deleteCharArr(ch);
- return 1;
-}
-printf("yeay it works!\n");
- 
+ mde_Char* b = mde_createChar();
 
-ch->data[3] = '6';
-ch->data[4] = '9';
-
-mde_CharArr* tmpCh = mde_resizeCharArr(ch, 20);
-
-if(!mde_isCharArrSafe(tmpCh)){
- mde_deleteCharArr(ch);
- mde_deleteCharArr(tmpCh);
- return 1;
-}
-
-mde_deleteCharArr(ch);
-ch = tmpCh;
-
-printf("%c%c nice\n",ch->data[3],ch->data[4]);
-
-mde_CharArr* c = mde_getCharArrAtIndex(ch, 3);
-
-
-if(mde_isCharArrSafe(c)) {
- printf("we got index 3 with value: %c\n", c->data[0]);
- 
-}
-
-
-mde_deleteCharArr(ch);
-mde_deleteCharArr(c);
-
-
-
-// Array of Strings!
-mde_ArrOfStrings* arr = mde_createArrOfStrings(99);
-
-if(!mde_isArrOfStringsSafe(arr)) {
- return 1;
-}
-
-for(int i = 0; i < arr->len; i++) {
- arr->data[i] = mde_createCharArr(100);
- mde_deleteCharArr(arr->data[i]);
-}
-
-mde_deleteArrOfStrings(arr);
-
-// Array of Arrays of Strings!  
-
-mde_ArrOfArrOfStrings* arrOfArr = mde_createArrOfArrOfStrings(99);
-
-for(int i = 0; i < arrOfArr->len; i++) {
- arrOfArr->data[i] = mde_createArrOfStrings(10);
- 
- for(int j = 0; j < arrOfArr->data[i]->len; j++) {
-   arrOfArr->data[i]->data[j] = mde_createCharArr(100);
-   mde_deleteCharArr(arrOfArr->data[i]->data[j]);
+ if(mde_isCharSafe(b)) {
+  b->val = 'A';
+  printf("test: %c\n", b->val);
  }
 
- mde_deleteArrOfStrings(arrOfArr->data[i]);   
-}
+ b = mde_deleteChar(b);
 
-mde_deleteArrOfArrOfStrings(arrOfArr);
+ // Strings! 
+ mde_CharArr* ch = mde_createCharArr(10);
+ 
+ if(mde_isCharArrSafe(ch))
+  for(int i = 0; i < ch->len; i++) {
+   ch->val[i] = 'B';
+  
+   printf("%c", ch->val[i]);
+  }
+  
+ printf("\n");
+ ch = mde_deleteCharArr(ch);
+     
+ ch = mde_createCharArr(20);
+  
+ 
+ ch->val[3] = '6';
+ ch->val[4] = '9';
+ 
+ mde_CharArr* tmpCh = mde_resizeCharArr(ch, 20);
+ 
+ if(!mde_isCharArrSafe(tmpCh)){
+  ch = mde_deleteCharArr(ch);
+  tmpCh = mde_deleteCharArr(tmpCh);
+  return 1;
+ }
+ 
+ ch = mde_deleteCharArr(ch);
+ ch = tmpCh;
+ 
+ printf("%c%c nice\n",ch->val[3],ch->val[4]);
+ 
+ mde_Char* c = mde_getCharArrAtIndex(ch, 3);
+
+
+ if(mde_isCharSafe(c)) {
+  printf("we got index 3 with value: %c\n", c->val);
+ }
+
+
+ ch = mde_deleteCharArr(ch);
+ c = mde_deleteChar(c);
 
 
  return 0;
