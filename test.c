@@ -1,3 +1,4 @@
+#include <time.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,14 +8,26 @@
 #define mde_RECOMMENDED
 #include "mde.h"
 
-int main(void) {
 
+bool callbackLoopCharArr(mde_CharArr* arr, char val, int i) {
+ (void)(arr);
+ (void)(i);
+ printf("%c",val);
+ return true;
+}
+
+int main(void) {
  mde_Char* b = mde_newChar();
 
+ if(mde_logIfCharErr(b)) return 1;
+ 
  if(mde_isCharSafe(b)) {
   b->val = 'A';
   printf("test: %c\n", b->val);
- }
+ } 
+
+
+
 
  b = mde_rmChar(b);
 
@@ -52,6 +65,7 @@ int main(void) {
  
  mde_Char* c = mde_getCharAt(ch, 3);
 
+ // mde_log(c->err);
 
  if(mde_isCharSafe(c)) {
   printf("we got index 3 with value: %c\n", c->val);
@@ -74,7 +88,11 @@ int main(void) {
  mde_CharArr* t = mde_combineCharArr(ch, ch2);
 
  for(int i = 0; i < t->len; i++) printf("%c", t->val[i]);
+ mde_loopCharArr(t, callbackLoopCharArr);
+       
  t = mde_rmCharArr(t);
+
+
  
  ch2 = mde_rmCharArr(ch2);
  ch = mde_rmCharArr(ch);
