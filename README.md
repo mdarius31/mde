@@ -19,31 +19,35 @@ Lets say you want functions for the bool data type:
 **This works with any data type** 
 ```
  typedef struct {
-   mde_Error err;
-   _Bool val;
+  mde_Error err;
+  _Bool val;
  } mde_Bool;
- int mde_BoolSize = sizeof(mde_Bool);
- mde_Bool *mde_newBool()
- mde_Bool *mde_rmBool(mde_Bool *val)
- _Bool mde_isBoolSafe(mde_Bool *val)
+ const int mde_BoolSize = sizeof(mde_Bool);
+ mde_Bool *mde_newBool();
+ mde_Bool *mde_rmBool(mde_Bool *val);
+ mde_Error mde_getBoolErr(mde_Bool *val);
+ _Bool mde_isBoolSafe(mde_Bool *val);
  
  typedef struct {
-   mde_Error err;
-   _Bool *val;
-   int len;
+  mde_Error err;
+  _Bool *val;
+  int len;
  } mde_BoolArr;
- 
- int mde_BoolArrSize = sizeof(mde_BoolArr);
+ const int mde_BoolArrSize = sizeof(mde_BoolArr);
  mde_BoolArr *mde_newBoolArr(int len)
- _Bool mde_isBoolArrSafe(mde_BoolArr *arr)
- mde_BoolArr *mde_rmBoolArr(mde_BoolArr *arr)
- mde_BoolArr *mde_resizeBoolArr(mde_BoolArr *arr, int len)
- _Bool mde_isIndexValidBool(mde_BoolArr *arr, int index)
- mde_Bool *mde_getBoolAt(mde_BoolArr *arr, int index)
- mde_BoolArr *mde_setBoolAt(mde_BoolArr *arr, _Bool val, int index)
- mde_BoolArr *mde_newBoolArrFrom(_Bool *val, int len)
- mde_BoolArr *mde_BoolArrAdd(mde_BoolArr *arr, _Bool val)
- mde_BoolArr *mde_combineBoolArr(mde_BoolArr *arr1, mde_BoolArr *arr2)
+ mde_Error mde_getBoolArrErr(mde_BoolArr *arr);
+ _Bool mde_isBoolArrSafe(mde_BoolArr *arr);
+ mde_BoolArr *mde_rmBoolArr(mde_BoolArr *arr);
+ mde_BoolArr *mde_resizeBoolArr(mde_BoolArr *arr, int len);
+ _Bool mde_isIndexValidBool(mde_BoolArr *arr, int index);
+ mde_Bool *mde_getBoolAt(mde_BoolArr *arr, int index);
+ mde_BoolArr *mde_setBoolAt(mde_BoolArr *arr, _Bool val,  int index);
+ mde_BoolArr *mde_newBoolArrFrom(_Bool *val, int len);
+ mde_BoolArr *mde_BoolArrAdd(mde_BoolArr *arr, _Bool val);
+ mde_BoolArr *mde_combineBoolArr(mde_BoolArr *arr1, mde_BoolArr *arr2) ;
+ mde_Error mde_loopBoolArr(mde_BoolArr *arr, _Bool callback(mde_BoolArr *arr, _Bool val, int i));
+ _Bool mde_logIfBoolArrErr(mde_BoolArr *arr);
+ _Bool mde_logIfBoolErr(mde_Bool *val);
 ```
 
 Define **mde_RECOMMENDED** if u want structs and functions for all the basic C data types
