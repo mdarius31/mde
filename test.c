@@ -5,9 +5,63 @@
 #include <string.h>
 
 // define mde_RECOMMENDED if u want structs and functions for all the basic C val types
-#define mde_RECOMMENDED
+// #define mde_RECOMMENDED
 #include "mde.h"
+mde_gen(char, Char)
 
+typedef struct {
+ char* val;
+} test;
+
+mde_gen(test, Test)
+
+
+bool callbackLoopTestArr(mde_TestArr* arr, test t, int i) {
+ (void)(arr);
+ (void)(i);
+ printf("%s\n",t.val);
+ return true;
+}
+
+int switching(void) {
+
+ int size = 2;
+ test t[size];
+ t[0] = (test){"darius"};
+ t[1] = (test){"darius2"};
+ 
+ mde_TestArr* t1 =  mde_newTestArrFrom(t,size);
+
+ mde_loopTestArr(t1, callbackLoopTestArr);
+
+ if(mde_hasErr(t1)) {
+  mde_log(t1);
+  t1 = mde_rmTestArr(t1);
+  return 1;
+ }
+
+ 
+ t1 = mde_switchTest(t1, 0, 1);
+
+ 
+ if(mde_hasErr(t1)) {
+  mde_log(t1);
+  t1 = mde_rmTestArr(t1);
+ 
+  return 1;
+ }
+ 
+ mde_loopTestArr(t1, callbackLoopTestArr);
+ 
+ t1 = mde_rmTestArr(t1);
+ 
+ return 0;
+}
+
+
+
+typedef void (*function)(int i); 
+mde_gen(function, Fn)
 
 bool callbackLoopCharArr(mde_CharArr* arr, char val, int i) {
  (void)(arr);
@@ -16,10 +70,14 @@ bool callbackLoopCharArr(mde_CharArr* arr, char val, int i) {
  return true;
 }
 
-int main(void) {
+int charStuff() {
+
  mde_Char* b = mde_newChar();
 
- if(mde_logIfCharErr(b)) return 1;
+ if(mde_hasErr(b)) { 
+  mde_log(b);
+  return 1;
+ }
  
  if(mde_isCharSafe(b)) {
   b->val = 'A';
@@ -65,8 +123,6 @@ int main(void) {
  
  mde_Char* c = mde_getCharAt(ch, 3);
 
- // mde_log(c->err);
-
  if(mde_isCharSafe(c)) {
   printf("we got index 3 with value: %c\n", c->val);
  }
@@ -96,5 +152,19 @@ int main(void) {
  
  ch2 = mde_rmCharArr(ch2);
  ch = mde_rmCharArr(ch);
+ 
+ printf("\nis good? yes\n");
+
  return 0;
+}
+
+#define tryTest(test) result = test(); if(result != 0) { printf("ERROR\n"); return result; }
+
+int main(void) {
+ int result = 0;
+
+ tryTest(charStuff);
+ tryTest(switching); 
+ 
+ return result;
 }

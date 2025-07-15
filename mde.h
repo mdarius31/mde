@@ -5,7 +5,7 @@
 #define mde_logTimeFmt "%d-%m-%Y %H:%M:%S"
 //
 
-
+#define mde_flush(...) fflush(__VA_ARGS__)
 #define mde_strftime(...) strftime(__VA_ARGS__)
 #define mde_localtime(...) localtime(__VA_ARGS__)
 #define mde_time(...) time(__VA_ARGS__) 
@@ -44,7 +44,8 @@ typedef enum {
 } mde_Error;
  
 
-#define mde_log(err) do {\
+#define mde_log(val) do {\
+ mde_Error err = *(mde_Error*)val;\
  if(err ==  mde_NO_ERRORS) break;\
  \
  char* prefix = "[MDE]";\
@@ -113,12 +114,24 @@ typedef enum {
  }\
  mde_snprintf(finalErrStr, size, template, prefix, time, errStr, file, line);\
  \
- if(mde_LOGS) mde_fprintf(mde_errst, finalErrStr);\
+ if(mde_LOGS) {\
+  mde_fprintf(mde_errst, finalErrStr);\
+  mde_flush(mde_errst);\
+ }\
  else (void)(finalErrStr);\
 \
  free(finalErrStr);\
 \
 } while(mde_false);\
+
+
+
+mde_bool mde_hasErr(void* val) {
+ mde_Error err = *(mde_Error*)val;
+ return err != mde_NO_ERRORS;
+}
+
+ 
 
 
 #define mde_gen(TYPE, NAME)\
@@ -275,18 +288,34 @@ static inline mde_Error mde_loop##NAME##Arr(mde_##NAME##Arr* arr, bool callback(
  return mde_NO_ERRORS;\
 }\
 \
-static inline mde_bool mde_logIf##NAME##ArrErr(mde_##NAME##Arr* arr) {\
- mde_Error err = mde_get##NAME##ArrErr(arr);\
- mde_log(err);\
- return mde_is##NAME##ArrSafe(arr);\
-}\
+static inline mde_##NAME##Arr* mde_switch##NAME(mde_##NAME##Arr* arr, int i1, int i2) {\
+ if(!mde_isIndexValid##NAME(arr, i1) || !mde_isIndexValid##NAME(arr, i2)) {\
+  arr->err = mde_INDEX_OUT_OF_BOUNDS;\
+  return arr;\
+ }\
+ \
+ mde_##NAME* val1 = mde_get##NAME##At(arr, i1);\
+ if(!mde_is##NAME##Safe(val1)) {\
+  arr->err = mde_get##NAME##Err(val1);\
+  mde_rm##NAME(val1);\
+  return arr;\
+ }\
 \
-static inline mde_bool mde_logIf##NAME##Err(mde_##NAME* val) {\
- mde_Error err = mde_get##NAME##Err(val);\
- mde_log(err);\
- return !mde_is##NAME##Safe(val);\
+ mde_##NAME* val2 = mde_get##NAME##At(arr, i2);\
+ if(!mde_is##NAME##Safe(val2)) {\
+  arr->err = mde_get##NAME##Err(val2);\
+  mde_rm##NAME(val2);\
+  return arr;\
+ }\
+ \
+ arr = mde_set##NAME##At(arr, val2->val, i1);\
+ arr = mde_set##NAME##At(arr, val1->val, i2);\
+ \
+ val1 = mde_rm##NAME(val1);\
+ val2 = mde_rm##NAME(val2);\
+ \
+ return arr;\
 }\
-
 
 #ifdef mde_RECOMMENDED
 
