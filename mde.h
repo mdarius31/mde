@@ -1,78 +1,49 @@
 #ifndef MDE
 #define MDE
 // CONFIG
-#define mde_LOGS mde_true
-#define mde_logTimeFmt "%d-%m-%Y %H:%M:%S"
+#define mdeLOGS true
+#define mdeLogTimeFmt "%d-%m-%Y %H:%M:%S"
 //
 
-#define mde_flush(...) fflush(__VA_ARGS__)
-#define mde_strftime(...) strftime(__VA_ARGS__)
-#define mde_localtime(...) localtime(__VA_ARGS__)
-#define mde_time(...) time(__VA_ARGS__) 
-#define mde_tm struct tm
-#define mde_time_t time_t
-#define mde_bool bool
-#define mde_true true
-#define mde_false false
-#define mde_memcpy(ptr1, ptr2, size) memcpy(ptr1, ptr2, size)
-#define mde_realloc(ptr, size) realloc(ptr, size)
-#define mde_malloc(size) malloc(size)
-#define mde_free(val) free(val)
-#define mde_NULL NULL
-
-
-#define mde_snprintf(ptr, n, format, ...) snprintf(ptr, n, format, __VA_ARGS__)
-
-
-// streams
-#define mde_errst stderr
-#define mde_outst stdout
-#define mde_inst stdin
-
-#define mde_fprintf(...) fprintf(__VA_ARGS__)
-#define mde_printErr(...) fprintf(__VA_ARGS__) 
-
-
-
 typedef enum {
- mde_NO_ERRORS,
- mde_NULL_VALUE,
- mde_INDEX_OUT_OF_BOUNDS,
- mde_FAILED_TO_ALLOCATE_MEMORY,
- mde_FAILED_TO_REALLOCATE_MEMORY,
- mde_POTENTIAL_DATA_LOSS
-} mde_Error;
+ mdeNO_ERRORS,
+ NULL_VALUE,
+ mdeINDEX_OUT_OF_BOUNDS,
+ mdeFAILED_TO_ALLOCATE_MEMORY,
+ mdeFAILED_TO_REALLOCATE_MEMORY,
+ mdePOTENTIAL_DATA_LOSS
+} mdeError;
  
 
-#define mde_log(val) do {\
- mde_Error err = *(mde_Error*)val;\
- if(err ==  mde_NO_ERRORS) break;\
+#define mdeLog(val) do {\
+ mdeError err = *(mdeError*)val;\
+ if(err ==  mdeNO_ERRORS) break;\
  \
  char* prefix = "[MDE]";\
- char* errStr = mde_NULL;\
+ char* errStr = NULL;\
 \
  switch(err) {\
-  case mde_NO_ERRORS:\
+  case mdeNO_ERRORS:\
    errStr = "NO ERRORS";\
    break;\
  \
-  case mde_NULL_VALUE:\
+  case NULL_VALUE:\
    errStr = "NULL VALUE";\
    break;\
 \
-  case mde_INDEX_OUT_OF_BOUNDS:\
+  case mdeINDEX_OUT_OF_BOUNDS:\
    errStr = "INDEX OUT OF BOUND";\
    break;\
    \
-  case mde_FAILED_TO_ALLOCATE_MEMORY:\
+  case mdeFAILED_TO_ALLOCATE_MEMORY:\
    errStr = "FAILED TO ALLOCATE MEMORY";\
    break;\
    \
-  case mde_FAILED_TO_REALLOCATE_MEMORY:\
+  case mdeFAILED_TO_REALLOCATE_MEMORY:\
    errStr = "FAILED TO REALLOCATE MEMORY";\
    break;\
    \
-  case mde_POTENTIAL_DATA_LOSS:\
+  case mdePOTENTIAL_DATA_LOSS:\
    errStr = "POTENTIAL DATA LOSS";\
    break; \
 \
@@ -82,13 +53,13 @@ typedef enum {
 \
  char buffer[100];\
  {\
-  mde_time_t rawtime;\
-  mde_tm *info;\
+  time_t rawtime;\
+  struct tm *info;\
   \
-  mde_time(&rawtime);\
-  info = mde_localtime(&rawtime);\
+  time(&rawtime);\
+  info = localtime(&rawtime);\
  \
-  mde_strftime(buffer, sizeof(buffer), mde_logTimeFmt, info);\
+  strftime(buffer, sizeof(buffer), mdeLogTimeFmt, info);\
  \
  \
  }\
@@ -97,272 +68,272 @@ typedef enum {
  char* time = buffer;\
  char* file = __FILE__;\
  \
- if(errStr == mde_NULL) {\
-  if(mde_LOGS) mde_fprintf(mde_errst, "[MDE] [%s] UNKNOWN ERROR IN \"%s\" ON LINE %i\n", time, file, line);\
+ if(errStr == NULL) {\
+  if(mdeLOGS) fprintf(stderr, "[MDE] [%s] UNKNOWN ERROR IN \"%s\" ON LINE %i\n", time, file, line);\
   break;\
  } \
  \
  char* template = "%s [%s] %s IN \"%s\" ON LINE %i\n";\
  \
- int size = mde_snprintf(mde_NULL, 0, template, prefix, time, errStr, file, line) + 1;\
+ int size = snprintf(NULL, 0, template, prefix, time, errStr, file, line) + 1;\
 \
- char* finalErrStr = mde_malloc(size);\
+ char* finalErrStr = malloc(size);\
  \
- if(finalErrStr == mde_NULL) {\
-  if(mde_LOGS) mde_fprintf(mde_errst, "[MDE] [%s] CANT LOG ERROR IN \"%s\" ON LINE %i\n", time, file, line);\
+ if(finalErrStr == NULL) {\
+  if(mdeLOGS) fprintf(stderr, "[MDE] [%s] CANT LOG ERROR IN \"%s\" ON LINE %i\n", time, file, line);\
   break;\
  }\
- mde_snprintf(finalErrStr, size, template, prefix, time, errStr, file, line);\
+ snprintf(finalErrStr, size, template, prefix, time, errStr, file, line);\
  \
- if(mde_LOGS) {\
-  mde_fprintf(mde_errst, finalErrStr);\
-  mde_flush(mde_errst);\
+ if(mdeLOGS) {\
+  fprintf(stderr, finalErrStr);\
+  fflush(stderr);\
  }\
  else (void)(finalErrStr);\
 \
  free(finalErrStr);\
 \
-} while(mde_false);\
+} while(false);\
 
 
 
-mde_bool mde_hasErr(void* val) {
- mde_Error err = *(mde_Error*)val;
- return err != mde_NO_ERRORS;
+bool mdeHasErr(void* val) {
+ mdeError err = *(mdeError*)val;
+ return err != mdeNO_ERRORS;
 }
 
  
 
 
-#define mde_gen(TYPE, NAME)\
+#define mdeGen(TYPE, NAME)\
 typedef struct {\
- mde_Error err;\
+ mdeError err;\
  TYPE val;\
-} mde_##NAME;\
+} mde##NAME;\
 \
-const int mde_##NAME##Size = sizeof(mde_##NAME);\
+const int mde##NAME##Size = sizeof(mde##NAME);\
 \
-static inline mde_##NAME* mde_new##NAME() {\
- mde_##NAME* result = mde_malloc(mde_##NAME##Size);\
- if(result == mde_NULL) return result;\
- result->err = mde_NO_ERRORS;\
+static inline mde##NAME* mdeNew##NAME() {\
+ mde##NAME* result = malloc(mde##NAME##Size);\
+ if(result == NULL) return result;\
+ result->err = mdeNO_ERRORS;\
  return result;\
 }\
 \
-static inline mde_##NAME* mde_rm##NAME(mde_##NAME* val) {\
- mde_free(val);\
- val = mde_NULL;\
+static inline mde##NAME* mdeRm##NAME(mde##NAME* val) {\
+ free(val);\
+ val = NULL;\
  return val;\
 }\
 \
-static inline mde_Error mde_get##NAME##Err(mde_##NAME* val) {\
- if(val == mde_NULL) return mde_NULL_VALUE;\
+static inline mdeError mdeGet##NAME##Err(mde##NAME* val) {\
+ if(val == NULL) return NULL_VALUE;\
  else return val->err;\
 }\
 \
-static inline mde_bool mde_is##NAME##Safe(mde_##NAME* val) {\
- if(mde_get##NAME##Err(val) == mde_NO_ERRORS) return mde_true;\
- return mde_false;\
+static inline bool mdeIs##NAME##Safe(mde##NAME* val) {\
+ if(mdeGet##NAME##Err(val) == mdeNO_ERRORS) return true;\
+ return false;\
 }\
 \
 typedef struct {\
- mde_Error err;\
+ mdeError err;\
  TYPE* val;\
  int len;\
-} mde_##NAME##Arr;\
+} mde##NAME##Arr;\
 \
-const int mde_##NAME##ArrSize = sizeof(mde_##NAME##Arr);\
+const int mde##NAME##ArrSize = sizeof(mde##NAME##Arr);\
 \
-static inline mde_##NAME##Arr* mde_new##NAME##Arr(int len) {\
- mde_##NAME##Arr* result = mde_malloc(mde_##NAME##ArrSize);\
- if(result == mde_NULL) return result;\
- result->err = mde_NO_ERRORS;\
+static inline mde##NAME##Arr* mdeNew##NAME##Arr(int len) {\
+ mde##NAME##Arr* result = malloc(mde##NAME##ArrSize);\
+ if(result == NULL) return result;\
+ result->err = mdeNO_ERRORS;\
  result->len = len;\
- result->val = mde_malloc(sizeof(TYPE) * len);\
+ result->val = malloc(sizeof(TYPE) * len);\
  \
- if(result->val == mde_NULL) result->err = mde_FAILED_TO_ALLOCATE_MEMORY;\
+ if(result->val == NULL) result->err = mdeFAILED_TO_ALLOCATE_MEMORY;\
  return result;\
 }\
 \
-static inline mde_Error mde_get##NAME##ArrErr(mde_##NAME##Arr* arr) {\
- if(arr == mde_NULL) return mde_NULL_VALUE;\
+static inline mdeError mdeGet##NAME##ArrErr(mde##NAME##Arr* arr) {\
+ if(arr == NULL) return NULL_VALUE;\
  else return arr->err;\
 }\
 \
-static inline mde_bool mde_is##NAME##ArrSafe(mde_##NAME##Arr* arr) {\
- if(mde_get##NAME##ArrErr(arr) == mde_NO_ERRORS) return mde_true;\
- return mde_false;\
+static inline bool mdeIs##NAME##ArrSafe(mde##NAME##Arr* arr) {\
+ if(mdeGet##NAME##ArrErr(arr) == mdeNO_ERRORS) return true;\
+ return false;\
 }\
 \
-static inline mde_##NAME##Arr* mde_rm##NAME##Arr(mde_##NAME##Arr* arr) {\
- mde_free(arr->val);\
- arr->val = mde_NULL;\
+static inline mde##NAME##Arr* mdeRm##NAME##Arr(mde##NAME##Arr* arr) {\
+ free(arr->val);\
+ arr->val = NULL;\
  arr->len = 0;\
- mde_free(arr);\
- arr = mde_NULL;\
+ free(arr);\
+ arr = NULL;\
  return arr;\
 }\
 \
-static inline mde_##NAME##Arr* mde_resize##NAME##Arr(mde_##NAME##Arr* arr, int len) {\
- mde_##NAME##Arr* resized = mde_new##NAME##Arr(len);\
- if(!mde_is##NAME##ArrSafe(resized)) {\
-  if(resized != mde_NULL) resized->err = mde_get##NAME##ArrErr(resized);\
+static inline mde##NAME##Arr* mdeResize##NAME##Arr(mde##NAME##Arr* arr, int len) {\
+ mde##NAME##Arr* resized = mdeNew##NAME##Arr(len);\
+ if(!mdeIs##NAME##ArrSafe(resized)) {\
+  if(resized != NULL) resized->err = mdeGet##NAME##ArrErr(resized);\
   return resized;\
  }\
  for(int i = 0; i < arr->len; i++) resized->val[i] = arr->val[i];\
- if(len < arr->len) resized->err = mde_POTENTIAL_DATA_LOSS;\
+ if(len < arr->len) resized->err = mdePOTENTIAL_DATA_LOSS;\
  return resized;\
 }\
 \
-static inline mde_bool mde_isIndexValid##NAME(mde_##NAME##Arr* arr, int index) {\
- if(index >= arr->len || index < 0) return mde_false;\
- else return mde_true;\
+static inline bool mdeIsIndexValid##NAME(mde##NAME##Arr* arr, int index) {\
+ if(index >= arr->len || index < 0) return false;\
+ else return true;\
 }\
 \
-static inline mde_##NAME* mde_get##NAME##At(mde_##NAME##Arr* arr, int index) {\
- mde_##NAME* result = mde_new##NAME();\
- if(!mde_is##NAME##Safe(result)) {\
-  if(result != mde_NULL) result->err = mde_get##NAME##Err(result);\
+static inline mde##NAME* mdeGet##NAME##At(mde##NAME##Arr* arr, int index) {\
+ mde##NAME* result = mdeNew##NAME();\
+ if(!mdeIs##NAME##Safe(result)) {\
+  if(result != NULL) result->err = mdeGet##NAME##Err(result);\
   return result;\
  }\
- if(!mde_isIndexValid##NAME(arr, index)) {\
-   result->err = mde_INDEX_OUT_OF_BOUNDS;\
+ if(!mdeIsIndexValid##NAME(arr, index)) {\
+   result->err = mdeINDEX_OUT_OF_BOUNDS;\
  } else {\
    result->val = arr->val[index];\
  }\
  return result;\
 }\
 \
-static inline mde_##NAME##Arr* mde_set##NAME##At(mde_##NAME##Arr* arr, TYPE val, int index) {\
- if(arr == mde_NULL) return arr;\
- if(!mde_isIndexValid##NAME(arr, index)) {\
-  arr->err = mde_INDEX_OUT_OF_BOUNDS;\
+static inline mde##NAME##Arr* mdeSet##NAME##At(mde##NAME##Arr* arr, TYPE val, int index) {\
+ if(arr == NULL) return arr;\
+ if(!mdeIsIndexValid##NAME(arr, index)) {\
+  arr->err = mdeINDEX_OUT_OF_BOUNDS;\
  } else {\
   arr->val[index] = val;\
  }\
  return arr;\
 }\
 \
-static inline mde_##NAME##Arr* mde_new##NAME##ArrFrom(TYPE* val, int len) {\
- mde_##NAME##Arr* result = mde_new##NAME##Arr(len);\
- if(!mde_is##NAME##ArrSafe(result)) return result;\
- if(val == mde_NULL) return result;\
- for(int i = 0; i < len; i++) mde_set##NAME##At(result, val[i], i);\
+static inline mde##NAME##Arr* mdeNew##NAME##ArrFrom(TYPE* val, int len) {\
+ mde##NAME##Arr* result = mdeNew##NAME##Arr(len);\
+ if(!mdeIs##NAME##ArrSafe(result)) return result;\
+ if(val == NULL) return result;\
+ for(int i = 0; i < len; i++) mdeSet##NAME##At(result, val[i], i);\
  return result;\
 }\
 \
-static inline mde_##NAME##Arr* mde_##NAME##ArrAdd(mde_##NAME##Arr* arr, TYPE val) {\
+static inline mde##NAME##Arr* mde##NAME##ArrAdd(mde##NAME##Arr* arr, TYPE val) {\
  int i = arr->len;\
- mde_##NAME##Arr* result = mde_resize##NAME##Arr(arr, arr->len + 1);\
- if(!mde_is##NAME##ArrSafe(result)) {\
-  if(result != mde_NULL) {\
-   result->err = mde_get##NAME##ArrErr(result);\
+ mde##NAME##Arr* result = mdeResize##NAME##Arr(arr, arr->len + 1);\
+ if(!mdeIs##NAME##ArrSafe(result)) {\
+  if(result != NULL) {\
+   result->err = mdeGet##NAME##ArrErr(result);\
   }\
   return result;\
  }\
- result = mde_set##NAME##At(result, val, i);\
- mde_rm##NAME##Arr(arr);\
+ result = mdeSet##NAME##At(result, val, i);\
+ mdeRm##NAME##Arr(arr);\
  return result;\
 }\
 \
-static inline mde_##NAME##Arr* mde_combine##NAME##Arr(mde_##NAME##Arr* arr1, mde_##NAME##Arr* arr2) {\
+static inline mde##NAME##Arr* mdeCombine##NAME##Arr(mde##NAME##Arr* arr1, mde##NAME##Arr* arr2) {\
  int len = arr1->len + arr2->len;\
- mde_##NAME##Arr* result = mde_new##NAME##Arr(len);\
- if(!mde_is##NAME##ArrSafe(result)) {\
-  if(result != mde_NULL) {\
-   result->err = mde_get##NAME##ArrErr(result);\
+ mde##NAME##Arr* result = mdeNew##NAME##Arr(len);\
+ if(!mdeIs##NAME##ArrSafe(result)) {\
+  if(result != NULL) {\
+   result->err = mdeGet##NAME##ArrErr(result);\
   }\
   return result;\
  }\
- for(int i = 0; i < arr1->len; i++) mde_set##NAME##At(result, arr1->val[i], i);\
- for(int i = 0; i < arr2->len; i++) mde_set##NAME##At(result, arr2->val[i], arr1->len + i);\
+ for(int i = 0; i < arr1->len; i++) mdeSet##NAME##At(result, arr1->val[i], i);\
+ for(int i = 0; i < arr2->len; i++) mdeSet##NAME##At(result, arr2->val[i], arr1->len + i);\
  return result;\
 }\
 \
-static inline mde_Error mde_loop##NAME##Arr(mde_##NAME##Arr* arr, bool callback(mde_##NAME##Arr* arr, TYPE val, int i)) {\
- if(!mde_is##NAME##ArrSafe(arr)) return mde_get##NAME##ArrErr(arr);\
- if(callback == mde_NULL) return mde_NULL_VALUE;\
+static inline mdeError mdeLoop##NAME##Arr(mde##NAME##Arr* arr, bool callback(mde##NAME##Arr* arr, TYPE val, int i)) {\
+ if(!mdeIs##NAME##ArrSafe(arr)) return mdeGet##NAME##ArrErr(arr);\
+ if(callback == NULL) return NULL_VALUE;\
  for(int i = 0; i < arr->len; i++) {\
   if(!callback(arr, arr->val[i], i)) break;\
  }\
- return mde_NO_ERRORS;\
+ return mdeNO_ERRORS;\
 }\
 \
-static inline mde_##NAME##Arr* mde_switch##NAME(mde_##NAME##Arr* arr, int i1, int i2) {\
- if(!mde_isIndexValid##NAME(arr, i1) || !mde_isIndexValid##NAME(arr, i2)) {\
-  arr->err = mde_INDEX_OUT_OF_BOUNDS;\
+static inline mde##NAME##Arr* mdeSwitch##NAME(mde##NAME##Arr* arr, int i1, int i2) {\
+ if(!mdeIsIndexValid##NAME(arr, i1) || !mdeIsIndexValid##NAME(arr, i2)) {\
+  arr->err = mdeINDEX_OUT_OF_BOUNDS;\
   return arr;\
  }\
  \
- mde_##NAME* val1 = mde_get##NAME##At(arr, i1);\
- if(!mde_is##NAME##Safe(val1)) {\
-  arr->err = mde_get##NAME##Err(val1);\
-  mde_rm##NAME(val1);\
+ mde##NAME* val1 = mdeGet##NAME##At(arr, i1);\
+ if(!mdeIs##NAME##Safe(val1)) {\
+  arr->err = mdeGet##NAME##Err(val1);\
+  mdeRm##NAME(val1);\
   return arr;\
  }\
 \
- mde_##NAME* val2 = mde_get##NAME##At(arr, i2);\
- if(!mde_is##NAME##Safe(val2)) {\
-  arr->err = mde_get##NAME##Err(val2);\
-  mde_rm##NAME(val2);\
+ mde##NAME* val2 = mdeGet##NAME##At(arr, i2);\
+ if(!mdeIs##NAME##Safe(val2)) {\
+  arr->err = mdeGet##NAME##Err(val2);\
+  mdeRm##NAME(val2);\
   return arr;\
  }\
  \
- arr = mde_set##NAME##At(arr, val2->val, i1);\
- arr = mde_set##NAME##At(arr, val1->val, i2);\
+ arr = mdeSet##NAME##At(arr, val2->val, i1);\
+ arr = mdeSet##NAME##At(arr, val1->val, i2);\
  \
- val1 = mde_rm##NAME(val1);\
- val2 = mde_rm##NAME(val2);\
+ val1 = mdeRm##NAME(val1);\
+ val2 = mdeRm##NAME(val2);\
  \
  return arr;\
 }\
 
-#ifdef mde_RECOMMENDED
+#ifdef mdeRecommended
 
- mde_gen(bool, Bool)
+ mdeGen(bool, Bool)
  
- mde_gen(char, Char)
- mde_gen(signed char, SChar)
- mde_gen(unsigned char, UChar)
+ mdeGen(char, Char)
+ mdeGen(signed char, SChar)
+ mdeGen(unsigned char, UChar)
  
- mde_gen(short, Short)
- mde_gen(short int , ShortInt)
- mde_gen(signed short, SShort)
- mde_gen(signed short int, SShortInt)
+ mdeGen(short, Short)
+ mdeGen(short int , ShortInt)
+ mdeGen(signed short, SShort)
+ mdeGen(signed short int, SShortInt)
 
- mde_gen(unsigned short, UShort)
- mde_gen(unsigned short int, UShortInt)
+ mdeGen(unsigned short, UShort)
+ mdeGen(unsigned short int, UShortInt)
  
- mde_gen(int, Int)
- mde_gen(signed, Signed)
- mde_gen(signed int, SInt)
+ mdeGen(int, Int)
+ mdeGen(signed, Signed)
+ mdeGen(signed int, SInt)
  
- mde_gen(unsigned, Unsigned) 
- mde_gen(unsigned int, UInt)
+ mdeGen(unsigned, Unsigned) 
+ mdeGen(unsigned int, UInt)
 
- mde_gen(long, Long)
- mde_gen(long int, LongInt)
- mde_gen(signed long, SLong)
- mde_gen(signed long int, SLongInt)
+ mdeGen(long, Long)
+ mdeGen(long int, LongInt)
+ mdeGen(signed long, SLong)
+ mdeGen(signed long int, SLongInt)
 
- mde_gen(unsigned long, ULong)
- mde_gen(unsigned long int, ULongInt)
+ mdeGen(unsigned long, ULong)
+ mdeGen(unsigned long int, ULongInt)
 
- mde_gen(long long, LongLong)
- mde_gen(long long, LongLongInt)
- mde_gen(signed long long, SLongLong)
- mde_gen(signed long long int, SLongLongInt)
+ mdeGen(long long, LongLong)
+ mdeGen(long long, LongLongInt)
+ mdeGen(signed long long, SLongLong)
+ mdeGen(signed long long int, SLongLongInt)
 
- mde_gen(unsigned long long, uLongLong)
- mde_gen(unsigned long long int, uLongLongInt)
+ mdeGen(unsigned long long, uLongLong)
+ mdeGen(unsigned long long int, uLongLongInt)
 
- mde_gen(float, Float)
+ mdeGen(float, Float)
  
- mde_gen(double, Double)
+ mdeGen(double, Double)
  
- mde_gen(long double, LongDouble)
+ mdeGen(long double, LongDouble)
 
-/* mde_RECOMMENDED */
+/* mdeRecommended */
 #endif
 
 /* MDE */

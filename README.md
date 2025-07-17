@@ -9,7 +9,7 @@ Lets say you want functions for the bool data type:
  
 ```
  #include "mde.h"
- mde_gen(bool, Bool)
+ mdeGen(bool, Bool)
 ```
  
 **bool** is the type that its inside and **Bool** will be the string used to compose the function names
@@ -18,41 +18,52 @@ Lets say you want functions for the bool data type:
  
 **This works with any data type** 
 ```
- typedef struct {
-  mde_Error err;
-  _Bool val;
- } mde_Bool;
- const int mde_BoolSize = sizeof(mde_Bool);
- mde_Bool *mde_newBool();
- mde_Bool *mde_rmBool(mde_Bool *val);
- mde_Error mde_getBoolErr(mde_Bool *val);
- _Bool mde_isBoolSafe(mde_Bool *val);
+ typedef enum {
+   mdeNO_ERRORS,
+   mdeNULL_VALUE,
+   mdeINDEX_OUT_OF_BOUNDS,
+   mdeFAILED_TO_ALLOCATE_MEMORY,
+   mdeFAILED_TO_REALLOCATE_MEMORY,
+   mdePOTENTIAL_DATA_LOSS
+ } mdeError;
+
+ mdeLog(val)
+ _Bool mdeHasErr(void *val)
  
  typedef struct {
-  mde_Error err;
-  _Bool *val;
-  int len;
- } mde_BoolArr;
- const int mde_BoolArrSize = sizeof(mde_BoolArr);
- mde_BoolArr *mde_newBoolArr(int len)
- mde_Error mde_getBoolArrErr(mde_BoolArr *arr);
- _Bool mde_isBoolArrSafe(mde_BoolArr *arr);
- mde_BoolArr *mde_rmBoolArr(mde_BoolArr *arr);
- mde_BoolArr *mde_resizeBoolArr(mde_BoolArr *arr, int len);
- _Bool mde_isIndexValidBool(mde_BoolArr *arr, int index);
- mde_Bool *mde_getBoolAt(mde_BoolArr *arr, int index);
- mde_BoolArr *mde_setBoolAt(mde_BoolArr *arr, _Bool val,  int index);
- mde_BoolArr *mde_newBoolArrFrom(_Bool *val, int len);
- mde_BoolArr *mde_BoolArrAdd(mde_BoolArr *arr, _Bool val);
- mde_BoolArr *mde_combineBoolArr(mde_BoolArr *arr1, mde_BoolArr *arr2) ;
- mde_Error mde_loopBoolArr(mde_BoolArr *arr, _Bool callback(mde_BoolArr *arr, _Bool val, int i));
- _Bool mde_logIfBoolArrErr(mde_BoolArr *arr);
- _Bool mde_logIfBoolErr(mde_Bool *val);
+   mdeError err;
+   char val;
+ } mdeChar;
+ const int mdeCharSize = sizeof(mdeChar);
+ mdeChar *mdeNewChar()
+ mdeChar *mdeRmChar(mdeChar *val)
+ mdeError mdeGetCharErr(mdeChar *val)
+ _Bool mdeIsCharSafe(mdeChar *val)
+ 
+ typedef struct {
+   mdeError err;
+   char *val;
+   int len;
+ } mdeCharArr;
+ const int mdeCharArrSize = sizeof(mdeCharArr);
+ mdeCharArr *mdeNewCharArr(int len)
+ mdeError mdeGetCharArrErr(mdeCharArr *arr)
+ _Bool mdeIsCharArrSafe(mdeCharArr *arr)
+ mdeCharArr *mdeRmCharArr(mdeCharArr *arr)
+ mdeCharArr *mdeResizeCharArr(mdeCharArr *arr, int len)
+ _Bool mdeIsIndexValidChar(mdeCharArr *arr, int index)
+ mdeChar *mdeGetCharAt(mdeCharArr *arr, int index)
+ mdeCharArr *mdeSetCharAt(mdeCharArr *arr, char val, int index)
+ mdeCharArr *mdeNewCharArrFrom(char *val, int len)
+ mdeCharArr *mdeCharArrAdd(mdeCharArr *arr, char val)
+ mdeCharArr *mdeCombineCharArr(mdeCharArr *arr1, mdeCharArr *arr2)
+ mdeError mdeLoopCharArr(mdeCharArr *arr, _Bool callback(mdeCharArr *arr, char val, int i))
+ mdeCharArr *mdeSwitchChar(mdeCharArr *arr, int i1, int i2)
 ```
 
-Define **mde_RECOMMENDED** if u want structs and functions for all the basic C data types
+Define **mdeRecommended** if u want structs and functions for all the basic C data types
 
 ```
- #define mde_RECOMMENDED
+ #define mdeRecommended
  #include "mde.h"
 ``` 

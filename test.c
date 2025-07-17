@@ -4,24 +4,24 @@
 #include <stdlib.h>
 #include <string.h>
 
-// define mde_RECOMMENDED if u want structs and functions for all the basic C val types
-// #define mde_RECOMMENDED
+// define mdeRecommended if u want structs and functions for all the basic C val types
+#define mdeRecommended
 #include "mde.h"
-mde_gen(char, Char)
 
 typedef struct {
  char* val;
 } test;
 
-mde_gen(test, Test)
+mdeGen(test, Test)
 
 
-bool callbackLoopTestArr(mde_TestArr* arr, test t, int i) {
+bool callbackLoopTestArr(mdeTestArr* arr, test t, int i) {
  (void)(arr);
  (void)(i);
  printf("%s\n",t.val);
  return true;
 }
+
 
 int switching(void) {
 
@@ -30,30 +30,30 @@ int switching(void) {
  t[0] = (test){"darius"};
  t[1] = (test){"darius2"};
  
- mde_TestArr* t1 =  mde_newTestArrFrom(t,size);
+ mdeTestArr* t1 =  mdeNewTestArrFrom(t,size);
 
- mde_loopTestArr(t1, callbackLoopTestArr);
+ mdeLoopTestArr(t1, callbackLoopTestArr);
 
- if(mde_hasErr(t1)) {
-  mde_log(t1);
-  t1 = mde_rmTestArr(t1);
+ mdeLog(t1);
+ if(mdeHasErr(t1)) {
+  t1 = mdeRmTestArr(t1);
   return 1;
  }
 
  
- t1 = mde_switchTest(t1, 0, 1);
+ t1 = mdeSwitchTest(t1, 0, 1);
 
  
- if(mde_hasErr(t1)) {
-  mde_log(t1);
-  t1 = mde_rmTestArr(t1);
+ if(mdeHasErr(t1)) {
+  mdeLog(t1);
+  t1 = mdeRmTestArr(t1);
  
   return 1;
  }
  
- mde_loopTestArr(t1, callbackLoopTestArr);
+ mdeLoopTestArr(t1, callbackLoopTestArr);
  
- t1 = mde_rmTestArr(t1);
+ t1 = mdeRmTestArr(t1);
  
  return 0;
 }
@@ -61,9 +61,10 @@ int switching(void) {
 
 
 typedef void (*function)(int i); 
-mde_gen(function, Fn)
+mdeGen(function, Fn)
 
-bool callbackLoopCharArr(mde_CharArr* arr, char val, int i) {
+
+bool callbackLoopCharArr(mdeCharArr* arr, char val, int i) {
  (void)(arr);
  (void)(i);
  printf("%c",val);
@@ -72,14 +73,14 @@ bool callbackLoopCharArr(mde_CharArr* arr, char val, int i) {
 
 int charStuff() {
 
- mde_Char* b = mde_newChar();
+ mdeChar* b = mdeNewChar();
 
- if(mde_hasErr(b)) { 
-  mde_log(b);
+ if(mdeHasErr(b)) { 
+  mdeLog(b);
   return 1;
  }
  
- if(mde_isCharSafe(b)) {
+ if(mdeIsCharSafe(b)) {
   b->val = 'A';
   printf("test: %c\n", b->val);
  } 
@@ -87,12 +88,12 @@ int charStuff() {
 
 
 
- b = mde_rmChar(b);
+ b = mdeRmChar(b);
 
  // Strings! 
- mde_CharArr* ch = mde_newCharArr(10);
+ mdeCharArr* ch = mdeNewCharArr(10);
  
- if(mde_isCharArrSafe(ch))
+ if(mdeIsCharArrSafe(ch))
   for(int i = 0; i < ch->len; i++) {
    ch->val[i] = 'B';
   
@@ -101,57 +102,57 @@ int charStuff() {
   
  printf("\n");
  
- ch = mde_rmCharArr(ch);
- ch = mde_newCharArr(20);
+ ch = mdeRmCharArr(ch);
+ ch = mdeNewCharArr(20);
   
  
- ch = mde_setCharAt(ch, '6', 3);
- ch = mde_setCharAt(ch, '9', 4);
+ ch = mdeSetCharAt(ch, '6', 3);
+ ch = mdeSetCharAt(ch, '9', 4);
  
- mde_CharArr* tmpCh = mde_resizeCharArr(ch, 20);
+ mdeCharArr* tmpCh = mdeResizeCharArr(ch, 20);
  
- if(!mde_isCharArrSafe(tmpCh)){
-  ch = mde_rmCharArr(ch);
-  tmpCh = mde_rmCharArr(tmpCh);
+ if(!mdeIsCharArrSafe(tmpCh)){
+  ch = mdeRmCharArr(ch);
+  tmpCh = mdeRmCharArr(tmpCh);
   return 1;
  }
  
- ch = mde_rmCharArr(ch);
+ ch = mdeRmCharArr(ch);
  ch = tmpCh;
  
  printf("%c%c nice\n",ch->val[3],ch->val[4]);
  
- mde_Char* c = mde_getCharAt(ch, 3);
+ mdeChar* c = mdeGetCharAt(ch, 3);
 
- if(mde_isCharSafe(c)) {
+ if(mdeIsCharSafe(c)) {
   printf("we got index 3 with value: %c\n", c->val);
  }
 
 
- ch = mde_rmCharArr(ch);
- c = mde_rmChar(c);
+ ch = mdeRmCharArr(ch);
+ c = mdeRmChar(c);
 
  
- ch = mde_newCharArrFrom("nice 69", 7);
+ ch = mdeNewCharArrFrom("nice 69", 7);
  for(int i = 0; i < ch->len; i++) printf("%c", ch->val[i]);
 
- ch = mde_CharArrAdd(ch, '\n');
+ ch = mdeCharArrAdd(ch, '\n');
  for(int i = 0; i < ch->len; i++) printf("%c", ch->val[i]);
  
  char* str = " ohh very nice\n";
 
- mde_CharArr* ch2 = mde_newCharArrFrom(str, strlen(str));
- mde_CharArr* t = mde_combineCharArr(ch, ch2);
+ mdeCharArr* ch2 = mdeNewCharArrFrom(str, strlen(str));
+ mdeCharArr* t = mdeCombineCharArr(ch, ch2);
 
  for(int i = 0; i < t->len; i++) printf("%c", t->val[i]);
- mde_loopCharArr(t, callbackLoopCharArr);
+ mdeLoopCharArr(t, callbackLoopCharArr);
        
- t = mde_rmCharArr(t);
+ t = mdeRmCharArr(t);
 
 
  
- ch2 = mde_rmCharArr(ch2);
- ch = mde_rmCharArr(ch);
+ ch2 = mdeRmCharArr(ch2);
+ ch = mdeRmCharArr(ch);
  
  printf("\nis good? yes\n");
 
