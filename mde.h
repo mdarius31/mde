@@ -288,7 +288,7 @@ static inline mde##NAME##Arr* mdeSwitch##NAME(mde##NAME##Arr* arr, int i1, int i
  return arr;\
 }\
 
-#ifdef mdeRecommended
+#ifdef mdeBasic
 
  mdeGen(bool, Bool)
  
@@ -333,7 +333,7 @@ static inline mde##NAME##Arr* mdeSwitch##NAME(mde##NAME##Arr* arr, int i1, int i
  
  mdeGen(long double, LongDouble)
 
-/* mdeRecommended */
+/* mmdeBasic */
 #endif
 
 /* MDE */

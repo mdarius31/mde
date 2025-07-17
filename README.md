@@ -61,9 +61,9 @@ Lets say you want functions for the bool data type:
  mdeCharArr *mdeSwitchChar(mdeCharArr *arr, int i1, int i2)
 ```
 
-Define **mdeRecommended** if u want structs and functions for all the basic C data types
+Define **mdeBasic** if u want structs and functions for all the basic C data types
 
 ```
- #define mdeRecommended
+ #define mdeBasic
  #include "mde.h"
 ``` 

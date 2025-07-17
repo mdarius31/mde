@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-// define mdeRecommended if u want structs and functions for all the basic C val types
-#define mdeRecommended
+// define mdeBasic if u want structs and functions for all the basic C val types
+#define mdeBasic
 #include "mde.h"
 
 typedef struct {
