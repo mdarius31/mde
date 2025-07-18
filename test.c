@@ -16,8 +16,8 @@ mdeGen(test, Test)
 
 
 bool callbackLoopTestArr(mdeTestArr* arr, test t, int i) {
- (void)(arr);
- (void)(i);
+ mdeIgn(arr);
+ mdeIgn(i);
  printf("%s\n",t.val);
  return true;
 }
@@ -65,8 +65,8 @@ mdeGen(function, Fn)
 
 
 bool callbackLoopCharArr(mdeCharArr* arr, char val, int i) {
- (void)(arr);
- (void)(i);
+ mdeIgn(arr);
+ mdeIgn(i);
  printf("%c",val);
  return true;
 }

@@ -13,7 +13,8 @@ typedef enum {
  mdeFAILED_TO_REALLOCATE_MEMORY,
  mdePOTENTIAL_DATA_LOSS
 } mdeError;
- 
+
+#define mdeIgn(var) (void)(var)
 
 #define mdeLog(val) do {\
  mdeError err = *(mdeError*)val;\
