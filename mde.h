@@ -1,34 +1,42 @@
 #ifndef MDE
 #define MDE
 // CONFIG
-#define mdeLOGS true
+
+#ifndef mdeLogWarn
+ #define mdeLogWarn true
+#endif
+
+#ifndef mdeLogErr
+ #define mdeLogErr true
+#endif
+
 #define mdeLogTimeFmt "%d-%m-%Y %H:%M:%S"
 //
 
 typedef enum {
  mdeNO_ERRORS,
- NULL_VALUE,
+ mdeNULL_VALUE,
  mdeINDEX_OUT_OF_BOUNDS,
  mdeFAILED_TO_ALLOCATE_MEMORY,
  mdeFAILED_TO_REALLOCATE_MEMORY,
  mdePOTENTIAL_DATA_LOSS
 } mdeError;
 
-#define mdeIgn(var) (void)(var)
+#define mdeIgn(var) do {\
+  (void)(var);\
+  if(mdeLogWarn) {\
+   printf("[MDE] WARN UNUSED VAR: \"%s\" IN FILE \"%s\" ON LINE %u\n", #var, __FILE__,  __LINE__);\
+   fflush(stdout);\
+  }\
+ } while(false)\
 
 #define mdeLog(val) do {\
  mdeError err = *(mdeError*)val;\
  if(err ==  mdeNO_ERRORS) break;\
- \
- char* prefix = "[MDE]";\
  char* errStr = NULL;\
 \
  switch(err) {\
-  case mdeNO_ERRORS:\
-   errStr = "NO ERRORS";\
-   break;\
- \
-  case NULL_VALUE:\
+  case mdeNULL_VALUE:\
    errStr = "NULL VALUE";\
    break;\
 \
@@ -70,23 +78,23 @@ typedef enum {
  char* file = __FILE__;\
  \
  if(errStr == NULL) {\
-  if(mdeLOGS) fprintf(stderr, "[MDE] [%s] UNKNOWN ERROR IN \"%s\" ON LINE %i\n", time, file, line);\
+  if(mdeLogErr) fprintf(stderr, "[MDE] [%s] UNKNOWN ERROR IN \"%s\" ON LINE %i\n", time, file, line);\
   break;\
  } \
  \
- char* template = "%s [%s] %s IN \"%s\" ON LINE %i\n";\
+ char* template = "[MDE] [%s] ERROR: %s IN \"%s\" ON LINE %i\n";\
  \
- int size = snprintf(NULL, 0, template, prefix, time, errStr, file, line) + 1;\
+ int size = snprintf(NULL, 0, template, time, errStr, file, line) + 1;\
 \
  char* finalErrStr = malloc(size);\
  \
  if(finalErrStr == NULL) {\
-  if(mdeLOGS) fprintf(stderr, "[MDE] [%s] CANT LOG ERROR IN \"%s\" ON LINE %i\n", time, file, line);\
+  if(mdeLogErr) fprintf(stderr, "[MDE] [%s] CANT LOG ERROR IN \"%s\" ON LINE %i\n", time, file, line);\
   break;\
  }\
- snprintf(finalErrStr, size, template, prefix, time, errStr, file, line);\
+ snprintf(finalErrStr, size, template, time, errStr, file, line);\
  \
- if(mdeLOGS) {\
+ if(mdeLogErr) {\
   fprintf(stderr, finalErrStr);\
   fflush(stderr);\
  }\
@@ -128,7 +136,7 @@ static inline mde##NAME* mdeRm##NAME(mde##NAME* val) {\
 }\
 \
 static inline mdeError mdeGet##NAME##Err(mde##NAME* val) {\
- if(val == NULL) return NULL_VALUE;\
+ if(val == NULL) return mdeNULL_VALUE;\
  else return val->err;\
 }\
 \
@@ -157,7 +165,7 @@ static inline mde##NAME##Arr* mdeNew##NAME##Arr(int len) {\
 }\
 \
 static inline mdeError mdeGet##NAME##ArrErr(mde##NAME##Arr* arr) {\
- if(arr == NULL) return NULL_VALUE;\
+ if(arr == NULL) return mdeNULL_VALUE;\
  else return arr->err;\
 }\
 \
@@ -253,7 +261,7 @@ static inline mde##NAME##Arr* mdeCombine##NAME##Arr(mde##NAME##Arr* arr1, mde##N
 \
 static inline mdeError mdeLoop##NAME##Arr(mde##NAME##Arr* arr, bool callback(mde##NAME##Arr* arr, TYPE val, int i)) {\
  if(!mdeIs##NAME##ArrSafe(arr)) return mdeGet##NAME##ArrErr(arr);\
- if(callback == NULL) return NULL_VALUE;\
+ if(callback == NULL) return mdeNULL_VALUE;\
  for(int i = 0; i < arr->len; i++) {\
   if(!callback(arr, arr->val[i], i)) break;\
  }\
