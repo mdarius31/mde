@@ -6,8 +6,8 @@
 
 // define mdeBasic if u want structs and functions for all the basic C val types
 #define mdeBasic
-#define mdeLogWarn true
-#define mdeLogErr true
+#define mdeLogWarn false
+#define mdeLogErr false
 
 #include "mde.h"
 

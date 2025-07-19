@@ -10,7 +10,9 @@
  #define mdeLogErr true
 #endif
 
-#define mdeLogTimeFmt "%d-%m-%Y %H:%M:%S"
+#ifndef mdeLogTimeFmt
+ #define mdeLogTimeFmt "%d-%m-%Y %H:%M:%S"
+#endif
 //
 
 typedef enum {
@@ -25,11 +27,76 @@ typedef enum {
 #define mdeIgn(var) do {\
   (void)(var);\
   if(mdeLogWarn) {\
-   printf("[MDE] WARN UNUSED VAR: \"%s\" IN FILE \"%s\" ON LINE %u\n", #var, __FILE__,  __LINE__);\
+   printf("[MDE] WARN UNUSED VAR: \"%s\" IN FILE \"%s\" ON LINE %i\n", #var, __FILE__,  __LINE__);\
    fflush(stdout);\
   }\
  } while(false)\
 
+char* mdeLogStr(void* val, char* file, int line) {
+ mdeError err = *(mdeError*)val;
+ if(err ==  mdeNO_ERRORS) return "\0";
+ char* errStr = NULL;\
+
+ switch(err) {
+  case mdeNULL_VALUE:
+   errStr = "NULL VALUE";
+   break;
+
+  case mdeINDEX_OUT_OF_BOUNDS:
+   errStr = "INDEX OUT OF BOUND";
+   break;
+   
+  case mdeFAILED_TO_ALLOCATE_MEMORY:
+   errStr = "FAILED TO ALLOCATE MEMORY";
+   break;
+   
+  case mdeFAILED_TO_REALLOCATE_MEMORY:
+   errStr = "FAILED TO REALLOCATE MEMORY";
+   break;
+   
+  case mdePOTENTIAL_DATA_LOSS:
+   errStr = "POTENTIAL DATA LOSS";
+   break; 
+
+  default:
+   errStr = "UNKNOWN ERROR";
+   break;
+ }
+
+ char buffer[100];
+ {
+  time_t rawtime;
+  struct tm *info;
+  
+  time(&rawtime);
+  info = localtime(&rawtime);
+ 
+  strftime(buffer, sizeof(buffer), mdeLogTimeFmt, info);
+ }
+
+ char* time = buffer;
+
+ char* template = "[MDE] [%s] ERROR: %s IN \"%s\" ON LINE %i";
+ 
+ int size = snprintf(NULL, 0, template, time, errStr, file, line) + 1;
+
+ char* finalErrStr = malloc(size);
+ 
+ if(finalErrStr == NULL) 
+  errStr = "CANT LOG ACTUAL ERROR";
+  
+ snprintf(finalErrStr, size, template, time, errStr, file, line);
+
+ return finalErrStr;
+}
+
+
+#define mdeLog2(val) do {\
+  char* errStr = mdeLogStr(val, __FILE__, __LINE__);\
+  if(errStr[0] != '\0') fprintf(stderr, "%s\n", errStr);\
+  free(errStr);\
+ } while(false)
+ 
 #define mdeLog(val) do {\
  mdeError err = *(mdeError*)val;\
  if(err ==  mdeNO_ERRORS) break;\
@@ -57,6 +124,7 @@ typedef enum {
    break; \
 \
   default:\
+   errStr = "UNKNOWN ERROR";\
    break;\
  }\
 \
