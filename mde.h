@@ -34,7 +34,7 @@ typedef enum {
 
 char* mdeLogStr(void* val, char* file, int line) {
  mdeError err = *(mdeError*)val;
- if(err ==  mdeNO_ERRORS) return "\0";
+ if(err ==  mdeNO_ERRORS) return NULL;
  char* errStr = NULL;\
 
  switch(err) {
@@ -91,88 +91,12 @@ char* mdeLogStr(void* val, char* file, int line) {
 }
 
 
-#define mdeLog2(val) do {\
-  char* errStr = mdeLogStr(val, __FILE__, __LINE__);\
-  if(errStr[0] != '\0') fprintf(stderr, "%s\n", errStr);\
-  free(errStr);\
- } while(false)
- 
 #define mdeLog(val) do {\
- mdeError err = *(mdeError*)val;\
- if(err ==  mdeNO_ERRORS) break;\
- char* errStr = NULL;\
-\
- switch(err) {\
-  case mdeNULL_VALUE:\
-   errStr = "NULL VALUE";\
-   break;\
-\
-  case mdeINDEX_OUT_OF_BOUNDS:\
-   errStr = "INDEX OUT OF BOUND";\
-   break;\
-   \
-  case mdeFAILED_TO_ALLOCATE_MEMORY:\
-   errStr = "FAILED TO ALLOCATE MEMORY";\
-   break;\
-   \
-  case mdeFAILED_TO_REALLOCATE_MEMORY:\
-   errStr = "FAILED TO REALLOCATE MEMORY";\
-   break;\
-   \
-  case mdePOTENTIAL_DATA_LOSS:\
-   errStr = "POTENTIAL DATA LOSS";\
-   break; \
-\
-  default:\
-   errStr = "UNKNOWN ERROR";\
-   break;\
- }\
-\
- char buffer[100];\
- {\
-  time_t rawtime;\
-  struct tm *info;\
-  \
-  time(&rawtime);\
-  info = localtime(&rawtime);\
- \
-  strftime(buffer, sizeof(buffer), mdeLogTimeFmt, info);\
- \
- \
- }\
-\
- int line = __LINE__;\
- char* time = buffer;\
- char* file = __FILE__;\
- \
- if(errStr == NULL) {\
-  if(mdeLogErr) fprintf(stderr, "[MDE] [%s] UNKNOWN ERROR IN \"%s\" ON LINE %i\n", time, file, line);\
-  break;\
- } \
- \
- char* template = "[MDE] [%s] ERROR: %s IN \"%s\" ON LINE %i\n";\
- \
- int size = snprintf(NULL, 0, template, time, errStr, file, line) + 1;\
-\
- char* finalErrStr = malloc(size);\
- \
- if(finalErrStr == NULL) {\
-  if(mdeLogErr) fprintf(stderr, "[MDE] [%s] CANT LOG ERROR IN \"%s\" ON LINE %i\n", time, file, line);\
-  break;\
- }\
- snprintf(finalErrStr, size, template, time, errStr, file, line);\
- \
- if(mdeLogErr) {\
-  fprintf(stderr, finalErrStr);\
-  fflush(stderr);\
- }\
- else (void)(finalErrStr);\
-\
- free(finalErrStr);\
-\
-} while(false);\
-
-
+  char* errStr = mdeLogStr(val, __FILE__, __LINE__);\
+  if(errStr != NULL) fprintf(stderr, "%s\n", errStr);\
+  free(errStr);\
+} while(false)\
+ 
 
 bool mdeHasErr(void* val) {
  mdeError err = *(mdeError*)val;
