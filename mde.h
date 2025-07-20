@@ -33,7 +33,8 @@ typedef enum {
  } while(false)\
 
 char* mdeLogStr(void* val, char* file, int line) {
- mdeError err = *(mdeError*)val;
+ mdeError err = val == NULL ? mdeNULL_VALUE : *(mdeError*)val;
+
  if(err ==  mdeNO_ERRORS) return NULL;
  char* errStr = NULL;\
 
@@ -93,7 +94,10 @@ char* mdeLogStr(void* val, char* file, int line) {
 
 #define mdeLog(val) do {\
   char* errStr = mdeLogStr(val, __FILE__, __LINE__);\
-  if(errStr != NULL) fprintf(stderr, "%s\n", errStr);\
+  if(errStr != NULL) {\
+   fprintf(stderr, "%s\n", errStr);\
+   fflush(stderr);\
+  }\
   free(errStr);\
 } while(false)\
  
