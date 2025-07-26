@@ -107,9 +107,6 @@ bool mdeHasErr(void* val) {
  return err != mdeNO_ERRORS;
 }
 
- 
-
-
 #define mdeGen(TYPE, NAME)\
 typedef struct {\
  mdeError err;\
@@ -118,7 +115,7 @@ typedef struct {\
 \
 const int mde##NAME##Size = sizeof(mde##NAME);\
 \
-static inline mde##NAME* mdeNew##NAME() {\
+static inline mde##NAME* mdeNew##NAME(void) {\
  mde##NAME* result = malloc(mde##NAME##Size);\
  if(result == NULL) return result;\
  result->err = mdeNO_ERRORS;\
@@ -141,6 +138,15 @@ static inline bool mdeIs##NAME##Safe(mde##NAME* val) {\
  return false;\
 }\
 \
+static inline mde##NAME* mdeNew##NAME##From(TYPE val) {\
+ mde##NAME* result = mdeNew##NAME();\
+ if(!mdeIs##NAME##Safe(result)) {\
+  result->err = mdeGet##NAME##Err(result);\
+  return result;\
+ }\
+ result->val = val;\
+ return result;\
+}\
 typedef struct {\
  mdeError err;\
  TYPE* val;\
@@ -292,6 +298,32 @@ static inline mde##NAME##Arr* mdeSwitch##NAME(mde##NAME##Arr* arr, int i1, int i
  \
  return arr;\
 }\
+\
+static inline bool mdeCmp##NAME##sAt(mde##NAME##Arr* arr, int i1, int i2, bool cmp(mde##NAME* v1, mde##NAME* v2)) {\
+ if(!mdeIsIndexValid##NAME(arr, i1) || !mdeIsIndexValid##NAME(arr, i2)) return false;\
+ \
+ mde##NAME* val1 = mdeGet##NAME##At(arr, i1);\
+ if(!mdeIs##NAME##Safe(val1)) {\
+  mdeError err = mdeGet##NAME##Err(val1);\
+  mdeRm##NAME(val1);\
+  return false;\
+ }\
+ \
+ mde##NAME* val2 = mdeGet##NAME##At(arr, i2);\
+ if(!mdeIs##NAME##Safe(val2)) {\
+  mdeError err = mdeGet##NAME##Err(val2);\
+  mdeRm##NAME(val1);\
+  mdeRm##NAME(val2);\
+  return false;\
+ }\
+ \
+ bool result = cmp(val1, val2);\
+ val1 = mdeRm##NAME(val1);\
+ val2 = mdeRm##NAME(val2);\
+ \
+ return result;\
+}\
+ 
 
 #ifdef mdeBasic
 
