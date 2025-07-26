@@ -15,363 +15,168 @@
 #endif
 //
 
+
 typedef enum {
- mdeNO_ERRORS,
- mdeNULL_VALUE,
- mdeINDEX_OUT_OF_BOUNDS,
- mdeFAILED_TO_ALLOCATE_MEMORY,
- mdeFAILED_TO_REALLOCATE_MEMORY,
- mdePOTENTIAL_DATA_LOSS
-} mdeError;
+ NO_ERRORS,
+ NULL_VALUE,
+ INDEX_OUT_OF_BOUNDS,
+ FAILED_TO_ALLOCATE_MEMORY,
+ FAILED_TO_REALLOCATE_MEMORY,
+ POTENTIAL_DATA_LOSS,
+} Error;
+
+char* formatErr(Error err) {
+ if(err == POTENTIAL_DATA_LOSS)         return "POTENTIAL DATA LOSS";
+ if(err == FAILED_TO_REALLOCATE_MEMORY) return "FAILED TO REALLOCATE MEMORY";
+ if(err == FAILED_TO_ALLOCATE_MEMORY)   return "FAILED TO ALLOCATE MEMORY";
+ if(err == INDEX_OUT_OF_BOUNDS)         return "INDEX OUT OF BOUNDS";
+ if(err == NULL_VALUE)                  return "NULL VALUE";
+ if(err == NO_ERRORS)                   return "NO ERRORS";
+ return "NO FORMAT FOR THIS ERROR";
+}
+
+bool hasErr(void* val) {
+ Error err = *(Error*)val;
+ return err != NO_ERRORS;
+}
 
 #define mdeIgn(var) do {\
-  (void)(var);\
-  if(mdeLogWarn) {\
-   printf("[MDE] WARN UNUSED VAR: \"%s\" IN FILE \"%s\" ON LINE %i\n", #var, __FILE__,  __LINE__);\
-   fflush(stdout);\
-  }\
- } while(false)\
-
-char* mdeLogStr(void* val, char* file, int line) {
- mdeError err = val == NULL ? mdeNULL_VALUE : *(mdeError*)val;
-
- if(err ==  mdeNO_ERRORS) return NULL;
- char* errStr = NULL;\
-
- switch(err) {
-  case mdeNULL_VALUE:
-   errStr = "NULL VALUE";
-   break;
-
-  case mdeINDEX_OUT_OF_BOUNDS:
-   errStr = "INDEX OUT OF BOUND";
-   break;
-   
-  case mdeFAILED_TO_ALLOCATE_MEMORY:
-   errStr = "FAILED TO ALLOCATE MEMORY";
-   break;
-   
-  case mdeFAILED_TO_REALLOCATE_MEMORY:
-   errStr = "FAILED TO REALLOCATE MEMORY";
-   break;
-   
-  case mdePOTENTIAL_DATA_LOSS:
-   errStr = "POTENTIAL DATA LOSS";
-   break; 
-
-  default:
-   errStr = "UNKNOWN ERROR";
-   break;
- }
-
- char buffer[100];
- {
-  time_t rawtime;
-  struct tm *info;
-  
-  time(&rawtime);
-  info = localtime(&rawtime);
- 
-  strftime(buffer, sizeof(buffer), mdeLogTimeFmt, info);
- }
-
- char* time = buffer;
-
- char* template = "[MDE] [%s] ERROR: %s IN \"%s\" ON LINE %i";
- 
- int size = snprintf(NULL, 0, template, time, errStr, file, line) + 1;
-
- char* finalErrStr = malloc(size);
- 
- if(finalErrStr == NULL) 
-  errStr = "CANT LOG ACTUAL ERROR";
-  
- snprintf(finalErrStr, size, template, time, errStr, file, line);
-
- return finalErrStr;
-}
-
-
-#define mdeLog(val) do {\
-  char* errStr = mdeLogStr(val, __FILE__, __LINE__);\
-  if(errStr != NULL) {\
-   fprintf(stderr, "%s\n", errStr);\
-   fflush(stderr);\
-  }\
-  free(errStr);\
+ (void)(var);\
+ if(mdeLogWarn) {\
+ printf("[MDE] WARN UNUSED VAR: \"%s\" IN FILE \"%s\" ON LINE %i\n", #var, __FILE__,  __LINE__);\
+ fflush(stdout);\
+ }\
 } while(false)\
- 
 
-bool mdeHasErr(void* val) {
- mdeError err = *(mdeError*)val;
- return err != mdeNO_ERRORS;
+#define mdeGen(TYPE, NAME, SHORT_NAME, SHORT_NAME_UP)\
+typedef struct {\
+ Error err;\
+ unsigned int len;\
+ TYPE* val;\
+} NAME;\
+\
+NAME SHORT_NAME() {\
+ NAME res = { NO_ERRORS, 0, NULL };\
+ return res;\
+}\
+\
+NAME SHORT_NAME##OfLen(unsigned int len) {\
+ NAME res = SHORT_NAME();\
+ TYPE* val = malloc(sizeof(TYPE) * len);\
+ \
+ if(val == NULL) {\
+  res.err = FAILED_TO_ALLOCATE_MEMORY;\
+  return res;\
+ }\
+ \
+ res.len = len;\
+ res.val = val;\
+ \
+ return res;\
+}\
+\
+void rm##SHORT_NAME_UP(NAME val) {\
+ free(val.val);\
+ val.err = NO_ERRORS;\
+ val.len = 0;\
+}\
+\
+NAME SHORT_NAME##FromOfLen(TYPE* val, unsigned int len) {\
+ NAME res = SHORT_NAME##OfLen(len);\
+ if(hasErr(&res)) {\
+  rm##SHORT_NAME_UP(res);\
+  return res;\
+ }\
+ for(unsigned int i = 0; i < len; i++) {\
+  res.val[i] = val[i];\
+ }\
+ return res;\
+}\
+\
+
+#define mdeGenExtra(TYPE, NAME, SHORT_NAME, SHORT_NAME_UP, FORMAT_FUNC)\
+char* format##SHORT_NAME_UP(NAME val) {\
+ char* res = NULL;\
+ char* template = "%s {\n"\
+                " err: \"%s\"\n"\
+                " len: %u\n"\
+                " %s*: %s\n"\
+                "}";\
+ if(val.len == 0) {\
+  int size = snprintf(NULL, 0, template, #NAME, formatErr(val.err), val.len, #TYPE, "") + 1;\
+  res = malloc(size);\
+  snprintf(res, size, template, #NAME, formatErr(val.err), val.len, #TYPE, "");\
+  return res;\
+ }\
+ \
+ char* valStr = FORMAT_FUNC(val.val[0]);\
+ unsigned int valStrLen = strlen(valStr);\
+ \
+ for(unsigned int i = 1; i < val.len; i++) {\
+  char* toAdd = FORMAT_FUNC(val.val[i]);\
+  unsigned int toAddLen = strlen(toAdd);\
+  unsigned int newValStrLen = toAddLen + valStrLen;\
+  \
+  char* newValStr = realloc(valStr, newValStrLen + 1);\
+  if(newValStr == NULL) {\
+   free(toAdd);\
+   break;\
+  }\
+  \
+  valStr = newValStr;\
+  valStr = memcpy(valStr+valStrLen, toAdd, toAddLen);\
+  valStrLen = newValStrLen;\
+  \
+  free(toAdd);\
+ }\
+ valStr[valStrLen] = '\0';\
+ int size = snprintf(NULL, 0, template, #NAME, formatErr(val.err), val.len, #TYPE, valStr) + 1;\
+ res = malloc(size);\
+ snprintf(res, size, template, #NAME, formatErr(val.err), val.len, #TYPE, valStr);\
+ free(valStr);\
+ return res;\
+}\
+\
+int fprint##SHORT_NAME_UP(FILE* stream, NAME val) {\
+ char* str = format##SHORT_NAME_UP(val);\
+ int res = fprintf(stream, "%s\n", str);\
+ free(str);\
+ return res;\
+}\
+\
+int print##SHORT_NAME_UP(NAME val) {\
+ return fprint##SHORT_NAME_UP(stdout, val);\
+}\
+
+
+mdeGen(char, String, str, Str);
+
+char* _formatStr(char val) {
+ int len = 1;
+ int size = len + 1;
+
+ char* res = malloc(size);
+ 
+ res[0] = val;
+ res[1] = '\0';
+ 
+ return res;
 }
 
-#define mdeGen(TYPE, NAME)\
-typedef struct {\
- mdeError err;\
- TYPE val;\
-} mde##NAME;\
-\
-const int mde##NAME##Size = sizeof(mde##NAME);\
-\
-static inline mde##NAME* mdeNew##NAME(void) {\
- mde##NAME* result = malloc(mde##NAME##Size);\
- if(result == NULL) return result;\
- result->err = mdeNO_ERRORS;\
- return result;\
-}\
-\
-static inline mde##NAME* mdeRm##NAME(mde##NAME* val) {\
- free(val);\
- val = NULL;\
- return val;\
-}\
-\
-static inline mdeError mdeGet##NAME##Err(mde##NAME* val) {\
- if(val == NULL) return mdeNULL_VALUE;\
- else return val->err;\
-}\
-\
-static inline bool mdeIs##NAME##Safe(mde##NAME* val) {\
- if(mdeGet##NAME##Err(val) == mdeNO_ERRORS) return true;\
- return false;\
-}\
-\
-static inline mde##NAME* mdeNew##NAME##From(TYPE val) {\
- mde##NAME* result = mdeNew##NAME();\
- if(!mdeIs##NAME##Safe(result)) {\
-  result->err = mdeGet##NAME##Err(result);\
-  return result;\
- }\
- result->val = val;\
- return result;\
-}\
-typedef struct {\
- mdeError err;\
- TYPE* val;\
- int len;\
-} mde##NAME##Arr;\
-\
-const int mde##NAME##ArrSize = sizeof(mde##NAME##Arr);\
-\
-static inline mde##NAME##Arr* mdeNew##NAME##Arr(int len) {\
- mde##NAME##Arr* result = malloc(mde##NAME##ArrSize);\
- if(result == NULL) return result;\
- result->err = mdeNO_ERRORS;\
- result->len = len;\
- result->val = malloc(sizeof(TYPE) * len);\
- \
- if(result->val == NULL) result->err = mdeFAILED_TO_ALLOCATE_MEMORY;\
- return result;\
-}\
-\
-static inline mdeError mdeGet##NAME##ArrErr(mde##NAME##Arr* arr) {\
- if(arr == NULL) return mdeNULL_VALUE;\
- else return arr->err;\
-}\
-\
-static inline bool mdeIs##NAME##ArrSafe(mde##NAME##Arr* arr) {\
- if(mdeGet##NAME##ArrErr(arr) == mdeNO_ERRORS) return true;\
- return false;\
-}\
-\
-static inline mde##NAME##Arr* mdeRm##NAME##Arr(mde##NAME##Arr* arr) {\
- free(arr->val);\
- arr->val = NULL;\
- arr->len = 0;\
- free(arr);\
- arr = NULL;\
- return arr;\
-}\
-\
-static inline mde##NAME##Arr* mdeResize##NAME##Arr(mde##NAME##Arr* arr, int len) {\
- mde##NAME##Arr* resized = mdeNew##NAME##Arr(len);\
- if(!mdeIs##NAME##ArrSafe(resized)) {\
-  if(resized != NULL) resized->err = mdeGet##NAME##ArrErr(resized);\
-  return resized;\
- }\
- for(int i = 0; i < arr->len; i++) resized->val[i] = arr->val[i];\
- if(len < arr->len) resized->err = mdePOTENTIAL_DATA_LOSS;\
- return resized;\
-}\
-\
-static inline bool mdeIsIndexValid##NAME(mde##NAME##Arr* arr, int index) {\
- if(index >= arr->len || index < 0) return false;\
- else return true;\
-}\
-\
-static inline mde##NAME* mdeGet##NAME##At(mde##NAME##Arr* arr, int index) {\
- mde##NAME* result = mdeNew##NAME();\
- if(!mdeIs##NAME##Safe(result)) {\
-  if(result != NULL) result->err = mdeGet##NAME##Err(result);\
-  return result;\
- }\
- if(!mdeIsIndexValid##NAME(arr, index)) {\
-   result->err = mdeINDEX_OUT_OF_BOUNDS;\
- } else {\
-   result->val = arr->val[index];\
- }\
- return result;\
-}\
-\
-static inline mde##NAME##Arr* mdeSet##NAME##At(mde##NAME##Arr* arr, TYPE val, int index) {\
- if(arr == NULL) return arr;\
- if(!mdeIsIndexValid##NAME(arr, index)) {\
-  arr->err = mdeINDEX_OUT_OF_BOUNDS;\
- } else {\
-  arr->val[index] = val;\
- }\
- return arr;\
-}\
-\
-static inline mde##NAME##Arr* mdeNew##NAME##ArrFrom(TYPE* val, int len) {\
- mde##NAME##Arr* result = mdeNew##NAME##Arr(len);\
- if(!mdeIs##NAME##ArrSafe(result)) return result;\
- if(val == NULL) return result;\
- for(int i = 0; i < len; i++) mdeSet##NAME##At(result, val[i], i);\
- return result;\
-}\
-\
-static inline mde##NAME##Arr* mde##NAME##ArrAdd(mde##NAME##Arr* arr, TYPE val) {\
- int i = arr->len;\
- mde##NAME##Arr* result = mdeResize##NAME##Arr(arr, arr->len + 1);\
- if(!mdeIs##NAME##ArrSafe(result)) {\
-  if(result != NULL) {\
-   result->err = mdeGet##NAME##ArrErr(result);\
-  }\
-  return result;\
- }\
- result = mdeSet##NAME##At(result, val, i);\
- mdeRm##NAME##Arr(arr);\
- return result;\
-}\
-\
-static inline mde##NAME##Arr* mdeCombine##NAME##Arr(mde##NAME##Arr* arr1, mde##NAME##Arr* arr2) {\
- int len = arr1->len + arr2->len;\
- mde##NAME##Arr* result = mdeNew##NAME##Arr(len);\
- if(!mdeIs##NAME##ArrSafe(result)) {\
-  if(result != NULL) {\
-   result->err = mdeGet##NAME##ArrErr(result);\
-  }\
-  return result;\
- }\
- for(int i = 0; i < arr1->len; i++) mdeSet##NAME##At(result, arr1->val[i], i);\
- for(int i = 0; i < arr2->len; i++) mdeSet##NAME##At(result, arr2->val[i], arr1->len + i);\
- return result;\
-}\
-\
-static inline mdeError mdeLoop##NAME##Arr(mde##NAME##Arr* arr, bool callback(mde##NAME##Arr* arr, TYPE val, int i)) {\
- if(!mdeIs##NAME##ArrSafe(arr)) return mdeGet##NAME##ArrErr(arr);\
- if(callback == NULL) return mdeNULL_VALUE;\
- for(int i = 0; i < arr->len; i++) {\
-  if(!callback(arr, arr->val[i], i)) break;\
- }\
- return mdeNO_ERRORS;\
-}\
-\
-static inline mde##NAME##Arr* mdeSwitch##NAME(mde##NAME##Arr* arr, int i1, int i2) {\
- if(!mdeIsIndexValid##NAME(arr, i1) || !mdeIsIndexValid##NAME(arr, i2)) {\
-  arr->err = mdeINDEX_OUT_OF_BOUNDS;\
-  return arr;\
- }\
- \
- mde##NAME* val1 = mdeGet##NAME##At(arr, i1);\
- if(!mdeIs##NAME##Safe(val1)) {\
-  arr->err = mdeGet##NAME##Err(val1);\
-  mdeRm##NAME(val1);\
-  return arr;\
- }\
-\
- mde##NAME* val2 = mdeGet##NAME##At(arr, i2);\
- if(!mdeIs##NAME##Safe(val2)) {\
-  arr->err = mdeGet##NAME##Err(val2);\
-  mdeRm##NAME(val2);\
-  return arr;\
- }\
- \
- arr = mdeSet##NAME##At(arr, val2->val, i1);\
- arr = mdeSet##NAME##At(arr, val1->val, i2);\
- \
- val1 = mdeRm##NAME(val1);\
- val2 = mdeRm##NAME(val2);\
- \
- return arr;\
-}\
-\
-static inline bool mdeCmp##NAME##sAt(mde##NAME##Arr* arr, int i1, int i2, bool cmp(mde##NAME* v1, mde##NAME* v2)) {\
- if(!mdeIsIndexValid##NAME(arr, i1) || !mdeIsIndexValid##NAME(arr, i2)) return false;\
- \
- mde##NAME* val1 = mdeGet##NAME##At(arr, i1);\
- if(!mdeIs##NAME##Safe(val1)) {\
-  mdeError err = mdeGet##NAME##Err(val1);\
-  mdeRm##NAME(val1);\
-  return false;\
- }\
- \
- mde##NAME* val2 = mdeGet##NAME##At(arr, i2);\
- if(!mdeIs##NAME##Safe(val2)) {\
-  mdeError err = mdeGet##NAME##Err(val2);\
-  mdeRm##NAME(val1);\
-  mdeRm##NAME(val2);\
-  return false;\
- }\
- \
- bool result = cmp(val1, val2);\
- val1 = mdeRm##NAME(val1);\
- val2 = mdeRm##NAME(val2);\
- \
- return result;\
-}\
- 
+mdeGenExtra(char, String, str, Str, _formatStr)
 
-#ifdef mdeBasic
-
- mdeGen(bool, Bool)
- 
- mdeGen(char, Char)
- mdeGen(signed char, SChar)
- mdeGen(unsigned char, UChar)
- 
- mdeGen(short, Short)
- mdeGen(short int , ShortInt)
- mdeGen(signed short, SShort)
- mdeGen(signed short int, SShortInt)
-
- mdeGen(unsigned short, UShort)
- mdeGen(unsigned short int, UShortInt)
- 
- mdeGen(int, Int)
- mdeGen(signed, Signed)
- mdeGen(signed int, SInt)
- 
- mdeGen(unsigned, Unsigned) 
- mdeGen(unsigned int, UInt)
-
- mdeGen(long, Long)
- mdeGen(long int, LongInt)
- mdeGen(signed long, SLong)
- mdeGen(signed long int, SLongInt)
-
- mdeGen(unsigned long, ULong)
- mdeGen(unsigned long int, ULongInt)
-
- mdeGen(long long, LongLong)
- mdeGen(long long, LongLongInt)
- mdeGen(signed long long, SLongLong)
- mdeGen(signed long long int, SLongLongInt)
-
- mdeGen(unsigned long long, uLongLong)
- mdeGen(unsigned long long int, uLongLongInt)
-
- mdeGen(float, Float)
- 
- mdeGen(double, Double)
- 
- mdeGen(long double, LongDouble)
-
-/* mmdeBasic */
-#endif
+// int fprintStr(FILE* stream, String str) {
+//  int res = 0;
+//  for(int i = 0; i < str.len; i++) {
+//   res = fprintf(stream, "%c", str.val[i]);
+//   if(res < 0) break;
+//  }
+//  return res;
+// }
+// 
+// int printStr(String str) {
+//  return fprintStr(stdout, str);
+// }
 
 /* MDE */
 #endif 
