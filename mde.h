@@ -120,7 +120,7 @@ static inline NAME SHORT_NAME##OfLen(size_t len) {\
   return res;\
  }\
  for(size_t i = 0; i < len; i++) {\
-  val[i] = '\0';\
+  val[i] = (TYPE){0};\
  }\
  res.len = len;\
  res.val = val;\
