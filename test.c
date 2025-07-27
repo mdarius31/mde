@@ -21,13 +21,9 @@ static inline char* _formatEnemy(Enemy* val, size_t len, size_t i) {
  if(isFirst) {
   infix = "";
   postfix = "";
- } else
- if(isLast) {
-  prefix = "";
- } else {
-  prefix = "";
-  postfix = "";
- }
+ } else prefix = ""; 
+
+ if(isLast) prefix = "";
  
  char* template = "%s%s{ \"name\": \"%s\", \"health\": %i }%s";
  size_t size = snprintf(NULL, 0, template, prefix, infix, val->name, val->health, postfix) + 1;
