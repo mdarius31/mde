@@ -17,8 +17,11 @@ static inline char* _formatEnemy(Enemy* val, size_t len, size_t i) {
 
  char* prefix = "[ ";
  char* infix = ", ";
- char* postfix = "]";
-
+ char* postfix = " ]";
+ 
+ if(isFirst && isLast) { 
+  infix = "";
+ } else
  if(isFirst) {
   infix = "";
   postfix = "";
@@ -56,6 +59,9 @@ static inline size_t _lenEnemies(Enemy** val) {
 mdeGenExtra(Enemy*, Enemies, enems, Enems, _formatEnemy, _lenEnemies)
 
 int main(void) {
+ FILE *fptr;
+ fptr = fopen("test.json", "w"); 
+ 
  String t = strFrom("");
  printStrInfoLn(t);
  rmStr(t);
@@ -72,20 +78,18 @@ int main(void) {
  
  Enemies enemies = enemsOfLen(10);
  for(size_t i = 0; i < enemies.len; i++) {
-   if(i % 2 == 0) enemies = enemsSet(enemies, &(Enemy){"Marvin", 100}, i);
-   else enemies = enemsSet(enemies, &(Enemy){"John", 100}, i);
+   if(i % 2 == 0) enemsSet(&enemies, &(Enemy){"Marvin", 100}, i);
+   else enemsSet(&enemies, &(Enemy){"John", 100}, i);
  }
+ fprintEnemsInfoLn(fptr, enemies);
  rmEnems(enemies);
 
 
  Enemies nullEnemies = enemsOfLen(12);
- FILE *fptr;
- fptr = fopen("test.json", "w"); 
+ 
  
 
  
- printEnemsInfoLn(nullEnemies);
- fprintEnemsInfoLn(fptr, nullEnemies);
  
  rmEnems(nullEnemies);
 
@@ -94,7 +98,6 @@ int main(void) {
  Enemies enemies2 = enemsFrom((Enemy*[]){ &(Enemy){"John", 100}, &(Enemy){"test here asd s", 100}, NULL });
  printEnemsInfoLn(enemies2);
 
- fprintEnemsInfoLn(fptr, enemies2);
  fclose(fptr);
  
  rmEnems(enemies2);

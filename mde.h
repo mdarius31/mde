@@ -107,7 +107,7 @@ typedef struct {\
 } NAME;\
 \
 static inline NAME SHORT_NAME() {\
- NAME res = { NO_ERRORS, 0, NULL };\
+ NAME res = { NO_ERRORS, 0, (TYPE*){0} };\
  return res;\
 }\
 \
@@ -146,17 +146,34 @@ static inline NAME SHORT_NAME##FromOfLen(TYPE* val, size_t len) {\
  return res;\
 }\
 \
-static inline NAME SHORT_NAME##Set(NAME arr, TYPE val, size_t i) {\
- if(i > arr.len) {\
-  arr.err = INDEX_OUT_OF_BOUNDS;\
-  return arr;\
+static inline void SHORT_NAME##Set(NAME* arr, TYPE val, size_t i) {\
+ if(i > arr->len) {\
+  arr->err = INDEX_OUT_OF_BOUNDS;\
+  return;\
  }\
- arr.val[i] = val;\
- return arr;\
+ arr->val[i] = val;\
+ return;\
 }\
 \
-static inline TYPE SHORT_NAME##Get(NAME arr, size_t i) {\
+static inline TYPE SHORT_NAME##GetAt(NAME arr, size_t i) {\
  return arr.val[i];\
+}\
+\
+static inline void SHORT_NAME##Resize(NAME* arr, size_t len) {\
+ if(len < arr->len){\
+  arr->err = POTENTIAL_DATA_LOSS;\
+  return;\
+ }\
+ arr->val = realloc(arr->val, sizeof(TYPE) * len);\
+}\
+\
+static inline void SHORT_NAME##Copy(NAME* arr1, NAME arr2) {\
+ SHORT_NAME##Resize(arr1, arr2.len);\
+ if(hasErr(arr1)) return;\
+ for(size_t i = 0; i < arr2.len; i++) {\
+  arr1->val[i] = arr2.val[i];\
+ }\
+ arr1->len = arr2.len;\
 }\
 \
 
