@@ -1,20 +1,26 @@
 #ifndef MDE
 #define MDE
+#include <time.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+
 // CONFIG
-
-#ifndef mdeLogWarn
- #define mdeLogWarn true
+#ifndef showLogWarn
+ #define showLogWarn true
 #endif
 
-#ifndef mdeLogErr
- #define mdeLogErr true
+#ifndef showLogErr
+ #define showLogErr true
 #endif
 
-#ifndef mdeLogTimeFmt
- #define mdeLogTimeFmt "%d-%m-%Y %H:%M:%S"
+
+#ifndef logTimeFmt
+ #define logTimeFmt "%d-%m-%Y %H:%M:%S"
 #endif
 //
-
 
 typedef enum {
  NO_ERRORS,
@@ -25,24 +31,69 @@ typedef enum {
  POTENTIAL_DATA_LOSS,
 } Error;
 
-char* formatErr(Error err) {
+static inline char* formatErr(Error err) {
  if(err == POTENTIAL_DATA_LOSS)         return "POTENTIAL DATA LOSS";
  if(err == FAILED_TO_REALLOCATE_MEMORY) return "FAILED TO REALLOCATE MEMORY";
  if(err == FAILED_TO_ALLOCATE_MEMORY)   return "FAILED TO ALLOCATE MEMORY";
  if(err == INDEX_OUT_OF_BOUNDS)         return "INDEX OUT OF BOUNDS";
  if(err == NULL_VALUE)                  return "NULL VALUE";
  if(err == NO_ERRORS)                   return "NO ERRORS";
- return "NO FORMAT FOR THIS ERROR";
+ return "UNKNOWN ERROR";
 }
 
-bool hasErr(void* val) {
+static inline bool hasErr(void* val) {
  Error err = *(Error*)val;
  return err != NO_ERRORS;
 }
 
-#define mdeIgn(var) do {\
+static inline char* logStr(void* val, char* file, int line) {
+ Error err = val == NULL ? NULL_VALUE : *(Error*)val;
+ if(err == NO_ERRORS) return NULL;
+ 
+ char* errStr = NULL;
+ errStr = formatErr(err);
+
+ char buffer[100];
+ {
+  time_t rawtime;
+  struct tm *info;
+  
+  time(&rawtime);
+  info = localtime(&rawtime);
+ 
+  strftime(buffer, sizeof(buffer), logTimeFmt, info);
+ }
+
+ char* time = buffer;
+ 
+ char* template = "[MDE] [%s] ERROR: %s IN \"%s\" ON LINE %i";
+ 
+ int size = snprintf(NULL, 0, template, time, errStr, file, line) + 1;
+
+ char* finalErrStr = malloc(size);
+ 
+ if(finalErrStr == NULL) 
+  errStr = "CANT LOG ACTUAL ERROR";
+  
+ snprintf(finalErrStr, size, template, time, errStr, file, line);
+
+ return finalErrStr;
+}
+
+
+#define logErr(val) do {\
+  char* errStr = logStr(val, __FILE__, __LINE__);\
+  if(errStr != NULL && showLogErr) {\
+   fprintf(stderr, "%s\n", errStr);\
+   fflush(stderr);\
+  }\
+  free(errStr);\
+} while(false)\
+ 
+
+#define ignVal(var) do {\
  (void)(var);\
- if(mdeLogWarn) {\
+ if(showLogWarn) {\
  printf("[MDE] WARN UNUSED VAR: \"%s\" IN FILE \"%s\" ON LINE %i\n", #var, __FILE__,  __LINE__);\
  fflush(stdout);\
  }\
@@ -51,16 +102,16 @@ bool hasErr(void* val) {
 #define mdeGen(TYPE, NAME, SHORT_NAME, SHORT_NAME_UP)\
 typedef struct {\
  Error err;\
- unsigned int len;\
+ size_t len;\
  TYPE* val;\
 } NAME;\
 \
-NAME SHORT_NAME() {\
+static inline NAME SHORT_NAME() {\
  NAME res = { NO_ERRORS, 0, NULL };\
  return res;\
 }\
 \
-NAME SHORT_NAME##OfLen(unsigned int len) {\
+static inline NAME SHORT_NAME##OfLen(size_t len) {\
  NAME res = SHORT_NAME();\
  TYPE* val = malloc(sizeof(TYPE) * len);\
  \
@@ -75,108 +126,166 @@ NAME SHORT_NAME##OfLen(unsigned int len) {\
  return res;\
 }\
 \
-void rm##SHORT_NAME_UP(NAME val) {\
+static inline void rm##SHORT_NAME_UP(NAME val) {\
  free(val.val);\
  val.err = NO_ERRORS;\
  val.len = 0;\
 }\
 \
-NAME SHORT_NAME##FromOfLen(TYPE* val, unsigned int len) {\
+static inline NAME SHORT_NAME##FromOfLen(TYPE* val, size_t len) {\
  NAME res = SHORT_NAME##OfLen(len);\
  if(hasErr(&res)) {\
   rm##SHORT_NAME_UP(res);\
   return res;\
  }\
- for(unsigned int i = 0; i < len; i++) {\
+ for(size_t i = 0; i < len; i++) {\
   res.val[i] = val[i];\
  }\
  return res;\
 }\
 \
+static inline NAME SHORT_NAME##Set(NAME arr, TYPE val, size_t i) {\
+ if(i > arr.len) {\
+  arr.err = INDEX_OUT_OF_BOUNDS;\
+  return arr;\
+ }\
+ arr.val[i] = val;\
+ return arr;\
+}\
+\
+static inline TYPE SHORT_NAME##Get(NAME arr, size_t i) {\
+ return arr.val[i];\
+}\
 
-#define mdeGenExtra(TYPE, NAME, SHORT_NAME, SHORT_NAME_UP, FORMAT_FUNC)\
-char* format##SHORT_NAME_UP(NAME val) {\
+#define mdeGenExtraPro(TYPE, NAME, SHORT_NAME, SHORT_NAME_UP, FORMAT_TEMPLATE, FORMAT_FUNC, LEN_FUNC)\
+static inline char* format##SHORT_NAME_UP(NAME val) {\
  char* res = NULL;\
- char* template = "%s {\n"\
-                " err: \"%s\"\n"\
-                " len: %u\n"\
-                " %s*: %s\n"\
-                "}";\
- if(val.len == 0) {\
-  int size = snprintf(NULL, 0, template, #NAME, formatErr(val.err), val.len, #TYPE, "") + 1;\
-  res = malloc(size);\
-  snprintf(res, size, template, #NAME, formatErr(val.err), val.len, #TYPE, "");\
-  return res;\
+ if(val.len != 0) {\
+  res = FORMAT_FUNC(val.val[0], val.len, 0);\
+   size_t resLen = strlen(res);\
+   \
+   for(size_t i = 1; i < val.len; i++) {\
+    char* toAdd = FORMAT_FUNC(val.val[i], val.len, i);\
+    size_t toAddLen = strlen(toAdd);\
+    size_t newresLen = toAddLen + resLen;\
+    \
+    char* newres = realloc(res, newresLen + 1);\
+    if(newres == NULL) {\
+     free(toAdd);\
+     break;\
+    }\
+    \
+    res = newres;\
+    res = memcpy(res+resLen, toAdd, toAddLen) - resLen;\
+    resLen = newresLen;\
+    \
+    free(toAdd);\
+   }\
+   res[resLen] = '\0';\
+ } else {\
+  char* def = "\"(null)\"";\
+  res = malloc(strlen(def) + 1);\
+  res = strcpy(res, def);\
  }\
  \
- char* valStr = FORMAT_FUNC(val.val[0]);\
- unsigned int valStrLen = strlen(valStr);\
- \
- for(unsigned int i = 1; i < val.len; i++) {\
-  char* toAdd = FORMAT_FUNC(val.val[i]);\
-  unsigned int toAddLen = strlen(toAdd);\
-  unsigned int newValStrLen = toAddLen + valStrLen;\
-  \
-  char* newValStr = realloc(valStr, newValStrLen + 1);\
-  if(newValStr == NULL) {\
-   free(toAdd);\
-   break;\
-  }\
-  \
-  valStr = newValStr;\
-  valStr = memcpy(valStr+valStrLen, toAdd, toAddLen);\
-  valStrLen = newValStrLen;\
-  \
-  free(toAdd);\
- }\
- valStr[valStrLen] = '\0';\
- int size = snprintf(NULL, 0, template, #NAME, formatErr(val.err), val.len, #TYPE, valStr) + 1;\
+ return res;\
+}\
+\
+static inline char* format##SHORT_NAME_UP##Info(NAME val) {\
+ char* res = NULL;\
+ char* valStr = format##SHORT_NAME_UP(val);\
+ size_t size = snprintf(NULL, 0, FORMAT_TEMPLATE) + 1;\
  res = malloc(size);\
- snprintf(res, size, template, #NAME, formatErr(val.err), val.len, #TYPE, valStr);\
+ snprintf(res, size, FORMAT_TEMPLATE);\
  free(valStr);\
  return res;\
 }\
 \
-int fprint##SHORT_NAME_UP(FILE* stream, NAME val) {\
- char* str = format##SHORT_NAME_UP(val);\
- int res = fprintf(stream, "%s\n", str);\
+static inline size_t fprint##SHORT_NAME_UP##Info(FILE* stream, NAME val) {\
+ char* str = format##SHORT_NAME_UP##Info(val);\
+ size_t res = fprintf(stream, "%s", str);\
  free(str);\
  return res;\
 }\
 \
-int print##SHORT_NAME_UP(NAME val) {\
+static inline size_t fprint##SHORT_NAME_UP##InfoLn(FILE* stream, NAME val) {\
+ fprint##SHORT_NAME_UP##Info(stream, val);\
+ return fprintf(stream, "\n");\
+}\
+\
+static inline size_t print##SHORT_NAME_UP##Info(NAME val) {\
+ return fprint##SHORT_NAME_UP##Info(stdout, val);\
+}\
+\
+static inline size_t print##SHORT_NAME_UP##InfoLn(NAME val) {\
+ print##SHORT_NAME_UP##Info(val);\
+ return fprintf(stdout, "\n");\
+}\
+\
+static inline size_t fprint##SHORT_NAME_UP(FILE* stream, NAME val) {\
+ char* str = format##SHORT_NAME_UP(val);\
+ size_t res = fprintf(stream, "%s", str);\
+ free(str);\
+ return res;\
+}\
+\
+static inline size_t fprint##SHORT_NAME_UP##Ln(FILE* stream, NAME val) {\
+ fprint##SHORT_NAME_UP(stream, val);\
+ return fprintf(stream, "\n");\
+}\
+\
+static inline size_t print##SHORT_NAME_UP(NAME val) {\
  return fprint##SHORT_NAME_UP(stdout, val);\
 }\
+\
+static inline size_t print##SHORT_NAME_UP##Ln(NAME val) {\
+ print##SHORT_NAME_UP(val);\
+ return fprintf(stdout, "\n");\
+}\
+static inline NAME SHORT_NAME##From(TYPE* val) {\
+ return SHORT_NAME##FromOfLen(val, LEN_FUNC(val));\
+}\
+\
 
+#define JSON_FORMAT(...) "{\n"\
+                          "\"type\": \"%s\",\n"\
+                          "\"err\":  \"%s\",\n"\
+                          "\"len\":  %lu,\n"\
+                          "\"val\":  %s\n}", __VA_ARGS__
+
+#define mdeGenExtra(TYPE, NAME, SHORT_NAME, SHORT_NAME_UP, FORMAT_FUNC, LEN_FUNC)\
+ mdeGenExtraPro(TYPE, NAME, SHORT_NAME, SHORT_NAME_UP, JSON_FORMAT(#NAME, formatErr(val.err), val.len, valStr), FORMAT_FUNC, LEN_FUNC)
 
 mdeGen(char, String, str, Str);
 
-char* _formatStr(char val) {
- int len = 1;
- int size = len + 1;
-
- char* res = malloc(size);
+static inline char* _formatStr(char val, size_t len, size_t i) {
+ size_t resLen = 1;
+ bool isFirst = i == 0;
+ bool isLast = (len - 1) == i;
  
- res[0] = val;
- res[1] = '\0';
+ if(isFirst || isLast) resLen += 1;
+  
+ size_t resSize = resLen + 1;
+
+ char* res = malloc(resSize);
+ if(isFirst) {
+  res[0] = '"';
+  res[1] = val;
+ }else if (isLast) {
+    res[0] = val;
+    res[1] = '"';
+ } else res[0] = val;
+ 
+ res[resLen] = '\0';
  
  return res;
 }
 
-mdeGenExtra(char, String, str, Str, _formatStr)
+static inline size_t _lenStr(char* val) {
+ return strlen(val);
+}
 
-// int fprintStr(FILE* stream, String str) {
-//  int res = 0;
-//  for(int i = 0; i < str.len; i++) {
-//   res = fprintf(stream, "%c", str.val[i]);
-//   if(res < 0) break;
-//  }
-//  return res;
-// }
-// 
-// int printStr(String str) {
-//  return fprintStr(stdout, str);
-// }
+mdeGenExtra(char, String, str, Str, _formatStr, _lenStr)
 
 /* MDE */
 #endif 
