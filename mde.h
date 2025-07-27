@@ -119,7 +119,9 @@ static inline NAME SHORT_NAME##OfLen(size_t len) {\
   res.err = FAILED_TO_ALLOCATE_MEMORY;\
   return res;\
  }\
- \
+ for(size_t i = 0; i < len; i++) {\
+  val[i] = '\0';\
+ }\
  res.len = len;\
  res.val = val;\
  \
@@ -156,35 +158,39 @@ static inline NAME SHORT_NAME##Set(NAME arr, TYPE val, size_t i) {\
 static inline TYPE SHORT_NAME##Get(NAME arr, size_t i) {\
  return arr.val[i];\
 }\
+\
 
 #define mdeGenExtraPro(TYPE, NAME, SHORT_NAME, SHORT_NAME_UP, FORMAT_TEMPLATE, FORMAT_FUNC, LEN_FUNC)\
 static inline char* format##SHORT_NAME_UP(NAME val) {\
  char* res = NULL;\
+ char* def = "\"(null)\"";\
+ size_t defSize = strlen(def) + 1;\
  if(val.len != 0) {\
   res = FORMAT_FUNC(val.val[0], val.len, 0);\
-   size_t resLen = strlen(res);\
+  size_t resLen = strlen(res);\
+  \
+  for(size_t i = 1; i < val.len; i++) {\
+   char* toAdd = NULL;\
+   toAdd = FORMAT_FUNC(val.val[i], val.len, i);\
+   size_t toAddLen = strlen(toAdd);\
+   size_t newresLen = toAddLen + resLen;\
    \
-   for(size_t i = 1; i < val.len; i++) {\
-    char* toAdd = FORMAT_FUNC(val.val[i], val.len, i);\
-    size_t toAddLen = strlen(toAdd);\
-    size_t newresLen = toAddLen + resLen;\
-    \
-    char* newres = realloc(res, newresLen + 1);\
-    if(newres == NULL) {\
-     free(toAdd);\
-     break;\
-    }\
-    \
-    res = newres;\
-    res = memcpy(res+resLen, toAdd, toAddLen) - resLen;\
-    resLen = newresLen;\
-    \
+   char* newres = realloc(res, newresLen + 1);\
+   if(newres == NULL) {\
     free(toAdd);\
+    break;\
    }\
-   res[resLen] = '\0';\
+   \
+   res = newres;\
+   res = memcpy(res+resLen, toAdd, toAddLen) - resLen;\
+   resLen = newresLen;\
+   \
+   free(toAdd);\
+  }\
+  res[resLen] = '\0';\
  } else {\
   char* def = "\"(null)\"";\
-  res = malloc(strlen(def) + 1);\
+  res = malloc(defSize);\
   res = strcpy(res, def);\
  }\
  \

@@ -11,19 +11,32 @@ typedef struct Enemy{
 mdeGen(Enemy*, Enemies, enems, Enems);
 
 static inline char* _formatEnemy(Enemy* val, size_t len, size_t i) {
+ 
  bool isFirst = i == 0;
  bool isLast = (len - 1) == i;
 
- char* prefix = "[\n ";
- char* infix = ",\n ";
- char* postfix = "\n]";
+ char* prefix = "[ ";
+ char* infix = ", ";
+ char* postfix = "]";
 
  if(isFirst) {
   infix = "";
   postfix = "";
- } else prefix = ""; 
+ } else
+ if(isLast) {
+  prefix = ""; 
+ } else {
+  prefix = "";
+  postfix = "";
+ }
 
- if(isLast) prefix = "";
+ if(val == NULL) {
+  char* nullTemplate = "%s%s\"(null)\"%s";
+  size_t size = snprintf(NULL, 0, nullTemplate, prefix, infix, postfix) + 1;
+  char* res = malloc(size);
+  snprintf(res, size, nullTemplate, prefix, infix, postfix);
+  return res;
+ }
  
  char* template = "%s%s{ \"name\": \"%s\", \"health\": %i }%s";
  size_t size = snprintf(NULL, 0, template, prefix, infix, val->name, val->health, postfix) + 1;
@@ -55,7 +68,6 @@ int main(void) {
  }
  
  printStrInfoLn(test);
- // printStrLn(test);
  rmStr(test);
  
  Enemies enemies = enemsOfLen(10);
@@ -64,13 +76,24 @@ int main(void) {
    else enemies = enemsSet(enemies, &(Enemy){"John", 100}, i);
  }
  rmEnems(enemies);
+
+
+ Enemies nullEnemies = enemsOfLen(12);
+ FILE *fptr;
+ fptr = fopen("test.json", "w"); 
+ 
+
+ 
+ printEnemsInfoLn(nullEnemies);
+ fprintEnemsInfoLn(fptr, nullEnemies);
+ 
+ rmEnems(nullEnemies);
+
+ 
  
  Enemies enemies2 = enemsFrom((Enemy*[]){ &(Enemy){"John", 100}, &(Enemy){"test here asd s", 100}, NULL });
  printEnemsInfoLn(enemies2);
- printEnemsLn(enemies2);
 
- FILE *fptr;
- fptr = fopen("test.json", "w"); 
  fprintEnemsInfoLn(fptr, enemies2);
  fclose(fptr);
  
